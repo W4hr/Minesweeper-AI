@@ -59,6 +59,20 @@ class MinesweeperAPI(MinesweeperBoard):
         elif cell == self.FLAG:
             self.hidden_board[y][x] = self.HIDDEN
 
+    def get_hidden_cell_count(self):
+        summe = 0
+        for row in self.hidden_board:
+            for cell in row:
+                if cell == self.HIDDEN:
+                    summe += 1
+        return summe
+    
+    def has_won(self, died = False):
+        if died: return
+        has_won = self.get_hidden_cell_count() == 0
+        print("You won!")
+        return has_won
+
     def __str__(self):
         hidden_board = [[self.convert(cell) for cell in row] for row in self.hidden_board]
         return self.stringify_board(hidden_board)

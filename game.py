@@ -73,7 +73,8 @@ def draw_board(surface, board):
 moves = 0
 
 game_over = False
-while not game_over:
+has_won = False
+while not game_over and not has_won:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -86,7 +87,8 @@ while not game_over:
                         board = MinesweeperAPI(board_dimensions, [(x,y)])
                     _, died = board.reveal(x, y)
                     moves += 1
-                    if died: game_over = True
+                    game_over = died
+                    has_won = board.has_won(died)
             elif event.button == 3:
                 board.flag(x, y)
     screen.fill((0,0,0))
