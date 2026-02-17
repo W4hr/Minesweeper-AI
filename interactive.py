@@ -2,6 +2,7 @@ from trainingsdata import MinesweeperBoard
 
 class MinesweeperAPI(MinesweeperBoard):
     HIDDEN = -1
+    FLAG = -3
 
     def __init__(self, dimension, revealed = []):
         super().__init__(dimension, revealed=revealed)
@@ -16,7 +17,10 @@ class MinesweeperAPI(MinesweeperBoard):
         if not (0 <= x < self.size and 0 <= y < self.size):
             raise IndexError
         cell = self.number_board[y][x]
-        if cell == self.BOMB:
+        hidden_cell = self.hidden_board[y][x]
+        if hidden_cell == self.FLAG:
+            return self.hidden_board, False
+        elif cell == self.BOMB:
             self.hidden_board = [row[:] for row in self.number_board]
             print("Died ☠")
             return self.number_board, True
@@ -47,6 +51,13 @@ class MinesweeperAPI(MinesweeperBoard):
         if board is None:
             board = self.hidden_board
         return board[y][x]
+
+    def flag(self, x, y):
+        cell = self.hidden_board[y][x]
+        if cell == self.HIDDEN:
+            self.hidden_board[y][x] = self.FLAG
+        elif cell == self.FLAG:
+            self.hidden_board[y][x] = self.HIDDEN
 
     def __str__(self):
         hidden_board = [[self.convert(cell) for cell in row] for row in self.hidden_board]

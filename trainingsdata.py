@@ -126,7 +126,8 @@ class MinesweeperBoard:
     def __str__(self):
         return self.stringify_board(self.number_board)
     
-example = MinesweeperBoard(10)
-print(example.stringify_board(example.get_binary_board(), 1))
-print(example)
-print(example.stringify_board(example.get_neighborhood(example.get_number_board(), 4, 7, 2)))
+if __name__ == "__main__":
+    example = MinesweeperBoard(10)
+    print(example.stringify_board(example.get_binary_board(), 1))
+    print(example)
+    print(example.stringify_board(example.get_neighborhood(example.get_number_board(), 4, 7, 2)))

@@ -10,13 +10,17 @@ class Config:
     dynamic = True
 
     width = 800
-    height = 400
+    height = 800
 
     board_dimensions = board_dimensions
     cell_size = 40
     
     HIDDEN = board.HIDDEN
     BOMB = board.BOMB
+    FLAG = board.FLAG
+
+    DISP_BOMB = "*"
+    DISP_FLAG = "🏴‍☠️"
 
     def __init__(self):
         if (self.dynamic):
@@ -37,7 +41,7 @@ font = pygame.font.Font(None, 50)
 def pixel_to_grid(mouse_pos, grid_origin, cell_size):
     mx, my = mouse_pos
     gx, gy = grid_origin
-    return (mx - gx)//cell_size, (my - gy)//cell_size
+    return int((mx - gx)//cell_size), int((my - gy)//cell_size)
 
 def draw_cell(surface, rect, value, font = font):
     if value == 0:
@@ -46,9 +50,11 @@ def draw_cell(surface, rect, value, font = font):
         pygame.draw.rect(surface, (180, 180, 180), rect)
     pygame.draw.rect(surface, (0, 0, 0), rect, 1) # Border
     if value == config.BOMB:
-        value = "*"
+        value = config.DISP_BOMB
     elif value == config.HIDDEN:
         return
+    elif value == config.FLAG:
+        value = config.DISP_FLAG
     text_surface = font.render(str(value), True, (0, 0, 0))
     text_rect = text_surface.get_rect(center=rect.center)
     surface.blit(text_surface, text_rect)
@@ -74,12 +80,15 @@ while not game_over:
             sys.exit()
         if event.type == pygame.MOUSEBUTTONDOWN:
             x, y = pixel_to_grid(event.pos, config.grid_origin, config.cell_size)
-            if 0 <= x < board.size and 0 <= y < board.size:
-                if moves == 0:
-                    board = MinesweeperAPI(board_dimensions, [(x,y)])
-                _, died = board.reveal(x, y)
-                moves += 1
-                if died: game_over = True
+            if event.button == 1:
+                if 0 <= x < board.size and 0 <= y < board.size:
+                    if moves == 0:
+                        board = MinesweeperAPI(board_dimensions, [(x,y)])
+                    _, died = board.reveal(x, y)
+                    moves += 1
+                    if died: game_over = True
+            elif event.button == 3:
+                board.flag(x, y)
     screen.fill((0,0,0))
     draw_board(screen, board)
     pygame.display.flip()
