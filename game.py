@@ -3,7 +3,8 @@ import sys
 from interactive import MinesweeperAPI
 
 board_dimensions = 10
-board = MinesweeperAPI(board_dimensions)
+bomb_percentage = 50
+board = MinesweeperAPI(board_dimensions, bomb_percentage)
 board.set_hidden_board()
 
 class Config:
@@ -21,6 +22,17 @@ class Config:
 
     DISP_BOMB = "*"
     DISP_FLAG = "🏴‍☠️"
+
+    COLOR_MAP = {
+        1: (0, 255, 0),      # Pure Green
+        2: (73, 255, 0),
+        3: (146, 255, 0),
+        4: (219, 255, 0),
+        5: (255, 219, 0),
+        6: (255, 146, 0),
+        7: (255, 73, 0),
+        8: (255, 0, 0)       # Pure Red
+    }
 
     def __init__(self):
         if (self.dynamic):
@@ -49,13 +61,16 @@ def draw_cell(surface, rect, value, font = font):
     else:
         pygame.draw.rect(surface, (180, 180, 180), rect)
     pygame.draw.rect(surface, (0, 0, 0), rect, 1) # Border
+    if isinstance(value, int) and value in config.COLOR_MAP: color = config.COLOR_MAP[value]
+    else: color = (0, 0, 0)
     if value == config.BOMB:
         value = config.DISP_BOMB
     elif value == config.HIDDEN:
         return
     elif value == config.FLAG:
         value = config.DISP_FLAG
-    text_surface = font.render(str(value), True, (0, 0, 0))
+    
+    text_surface = font.render(str(value), True, color)
     text_rect = text_surface.get_rect(center=rect.center)
     surface.blit(text_surface, text_rect)
 
@@ -74,23 +89,24 @@ moves = 0
 
 game_over = False
 has_won = False
-while not game_over and not has_won:
+while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            x, y = pixel_to_grid(event.pos, config.grid_origin, config.cell_size)
-            if event.button == 1:
-                if 0 <= x < board.size and 0 <= y < board.size:
-                    if moves == 0:
-                        board = MinesweeperAPI(board_dimensions, [(x,y)])
-                    _, died = board.reveal(x, y)
-                    moves += 1
-                    game_over = died
-                    has_won = board.has_won(died)
-            elif event.button == 3:
-                board.flag(x, y)
+        if not game_over and not has_won:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pixel_to_grid(event.pos, config.grid_origin, config.cell_size)
+                if event.button == 1:
+                    if 0 <= x < board.size and 0 <= y < board.size:
+                        if moves == 0:
+                            board = MinesweeperAPI(board_dimensions, bomb_percentage, [(x,y)])
+                        _, died = board.reveal(x, y)
+                        moves += 1
+                        game_over = died
+                        has_won = board.has_won(died)
+                elif event.button == 3:
+                    board.flag(x, y)
     screen.fill((0,0,0))
     draw_board(screen, board)
     pygame.display.flip()

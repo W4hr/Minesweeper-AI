@@ -4,8 +4,8 @@ class MinesweeperAPI(MinesweeperBoard):
     HIDDEN = -1
     FLAG = -3
 
-    def __init__(self, dimension, revealed = []):
-        super().__init__(dimension, revealed=revealed)
+    def __init__(self, dimension, bomb_percentage = 15, revealed = []):
+        super().__init__(dimension, bomb_percentage, revealed)
         self.set_hidden_board()
 
     def set_hidden_board(self):
@@ -13,12 +13,17 @@ class MinesweeperAPI(MinesweeperBoard):
         self.hidden_board = hidden_board
         return self.hidden_board
 
-    def reveal(self, x, y):
+    def reveal(self, x, y, is_initial = True):
         if not (0 <= x < self.size and 0 <= y < self.size):
             raise IndexError
         cell = self.number_board[y][x]
         hidden_cell = self.hidden_board[y][x]
         if hidden_cell == self.FLAG:
+            return self.hidden_board, False
+        elif hidden_cell == cell and is_initial:
+            for ny, nx in self.iter_neighborhood(x, y, 1):
+                _, died = self.reveal(nx, ny, False)
+                if died: return self.hidden_board, True
             return self.hidden_board, False
         elif cell == self.BOMB:
             self.hidden_board = [row[:] for row in self.number_board]
@@ -70,7 +75,7 @@ class MinesweeperAPI(MinesweeperBoard):
     def has_won(self, died = False):
         if died: return
         has_won = self.get_hidden_cell_count() == 0
-        print("You won!")
+        if (has_won): print("You won!")
         return has_won
 
     def __str__(self):
