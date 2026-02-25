@@ -1,16 +1,11 @@
 import random
-from interactive import MinesweeperAPI
+from minesweeper.interactive import MinesweeperAPI
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics import mean_squared_error, root_mean_squared_error
 import numpy as np
 
 class MinesweeperAI:
-    class CONFIG:
-        alpha = 0.01 
-        loss_threshold = 0.001
-        max_steps = 9999
-
     def __init__(self, radius_neighborhood, trainingsdata_amount, bomb_percentage):
         board_dimension = radius_neighborhood * 2 + 1
         X = [] # Input
@@ -36,17 +31,14 @@ class MinesweeperAI:
         self.rmse = root_mean_squared_error(self.y_test, y_pred)
         self.weights = model.coef_
         self.bias = model.intercept_
-        print(self.X_test)
-        print()
+        self.model = model
 
 
 def getTraingsdata(board_dimension, bomb_percentage, radius):
     safe_cells = [[random.randint(0, board_dimension - 1), random.randint(0, board_dimension - 1)] for _ in range(6)]
     board = MinesweeperAPI(board_dimension, bomb_percentage, safe_cells)
-    print(board.stringify_board(board.get_binary_board()))
     for safe_cell in safe_cells:
         board.reveal(safe_cell[0], safe_cell[1])
-    print(board)
     min_coordinate_neighborhood_in_bounds = 0 + radius
     max_coordinate_neighborhood_in_bounds = board_dimension - radius - 1
     traindata = []

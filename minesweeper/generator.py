@@ -1,20 +1,7 @@
 import random as rd
 import math
 from typing import List
-
-def bordered(text):
-    """
-    Surrounds text with a box
-    
-    :param text: the Minesweeper board to be surrounded
-    """
-    lines = text.splitlines()
-    width = max(len(s) for s in lines)
-    res = ['┌' + '─' * (width+2) + '┐']
-    for s in lines:
-        res.append('│ ' + s.ljust(width) + ' │')
-    res.append('└' + '─' * (width+2) + '┘')
-    return '\n'.join(res)
+from minesweeper.utils import stringify_board
 
 
 class MinesweeperBoard:
@@ -22,7 +9,9 @@ class MinesweeperBoard:
     Generates board with bombs on initialization
     """
 
+    HIDDEN = -1
     BOMB = -2
+    FLAG = -3
     OUT_OF_BOUNDS = -4
 
     def __init__(self, dimension: int = 5, bomb_percentage: float = 15, revealed = None):
@@ -131,20 +120,12 @@ class MinesweeperBoard:
 
     def to_board(self, vector: List[int]):
         return [vector[self.size * x: self.size * x + self.size] for x in range(self.size)]
-    
-    def stringify_board(self, board: List[List[int]], bomb = None):
-        joined_board = ""
-        if bomb is None:
-            bomb = self.BOMB
-        for i in board:
-            joined_board += " ".join([str(j) if j != bomb else "*" for j in i]) + "\n"
-        return bordered(joined_board)
 
     def __str__(self):
-        return self.stringify_board(self.number_board)
+        return stringify_board(self.number_board)
     
 if __name__ == "__main__":
     example = MinesweeperBoard(10)
-    print(example.stringify_board(example.get_binary_board(), 1))
+    print(stringify_board(example.get_binary_board(), 1))
     print(example)
-    print(example.stringify_board(example.get_neighborhood(example.get_number_board(), 4, 7, 2)))
+    print(stringify_board(example.get_neighborhood(example.get_number_board(), 4, 7, 2)))

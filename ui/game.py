@@ -1,6 +1,6 @@
 import pygame
 import sys
-from interactive import MinesweeperAPI
+from minesweeper.interactive import MinesweeperAPI
 
 board_dimensions = 10
 bomb_percentage = 15

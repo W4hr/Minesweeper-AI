@@ -1,9 +1,7 @@
-from generator import MinesweeperBoard
+from minesweeper.generator import MinesweeperBoard
+from minesweeper.utils import stringify_board
 
 class MinesweeperAPI(MinesweeperBoard):
-    HIDDEN = -1
-    FLAG = -3
-
     def __init__(self, dimension, bomb_percentage = 15, revealed = []):
         super().__init__(dimension, bomb_percentage, revealed)
         self.set_hidden_board()
@@ -84,7 +82,7 @@ class MinesweeperAPI(MinesweeperBoard):
 
     def __str__(self):
         hidden_board = [[self.convert(cell) for cell in row] for row in self.hidden_board]
-        return self.stringify_board(hidden_board)
+        return stringify_board(hidden_board)
     
     def reset(self):
         self.moves = 0
@@ -92,8 +90,8 @@ class MinesweeperAPI(MinesweeperBoard):
 
 if __name__ == "__main__":
     board = MinesweeperAPI(11, 20, [[1,2]])
-    print(board.stringify_board(board.get_out_of_bounds_neighborhood(board.number_board, 0, 0, 1)))
-    print(board.stringify_board(board.get_number_board()))
+    print(stringify_board(board.get_out_of_bounds_neighborhood(board.number_board, 0, 0, 1)))
+    print(stringify_board(board.get_number_board()))
     print(board)
     while True:
         x = int(input("x = "))

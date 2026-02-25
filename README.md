@@ -21,5 +21,10 @@ source venv/bin/activate
 
 3. Start game
 ```shell
-python game.py
+python -m ui.game
+```
+
+4. Train ai
+```shell
+python -m minesweeper.ai
 ```
