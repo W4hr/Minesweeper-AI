@@ -23,11 +23,12 @@ class MinesweeperBoard:
     """
 
     BOMB = -2
+    OUT_OF_BOUNDS = -4
 
     def __init__(self, dimension: int = 5, bomb_percentage: float = 15, revealed = None):
         if revealed is None:
             revealed = []
-        revealed = list(set(revealed))
+        # revealed = list(set(revealed))
         
         bomb_count = math.ceil((dimension**2) * (bomb_percentage/100))
         binary_vector = [1] * bomb_count + [0] * (dimension**2 - bomb_count - len(revealed))
@@ -82,6 +83,22 @@ class MinesweeperBoard:
                 current_row = ny
             neighborhood[-1].append(matrix[ny][nx])
 
+        return neighborhood
+    
+    def get_out_of_bounds_neighborhood(self, matrix, x, y, area_around = 1):
+        x_start = x - area_around
+        x_end = x + area_around
+        y_start = y - area_around
+        y_end = y + area_around
+        neighborhood = []
+        for y in range(y_start, y_end + 1):
+            new_row = []
+            for x in range(x_start, x_end + 1):
+                if y < 0 or y > self.size - 1 or x < 0 or x > self.size - 1:
+                    new_row.append(self.OUT_OF_BOUNDS)
+                else:
+                    new_row.append(matrix[y][x])
+            neighborhood.append(new_row)
         return neighborhood
 
     def iter_neighborhood(self, x, y, area_around = 1):

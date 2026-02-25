@@ -3,8 +3,8 @@ import sys
 from interactive import MinesweeperAPI
 
 board_dimensions = 10
-bomb_percentage = 50
-board = MinesweeperAPI(board_dimensions, bomb_percentage)
+bomb_percentage = 15
+board = MinesweeperAPI(board_dimensions, bomb_percentage, [[0,0]])
 board.set_hidden_board()
 
 class Config:
@@ -85,10 +85,35 @@ def draw_board(surface, board):
             button_rect = pygame.Rect(left, top, config.cell_size, config.cell_size)
             draw_cell(surface, button_rect, board.get_cell(x, y))
 
+class MenuConfig:
+    width = 200
+    height = 200
+
+    retrybtn_size = (100, 40)
+
+    def __init__(self):
+        self.menu_pos = ((config.width-MenuConfig.width)/2, (config.height-MenuConfig.height)/2)
+        self.retrybtn_pos = (self.menu_pos[0] + ((self.width - self.retrybtn_size[0])/2), self.menu_pos[1] + ((self.height - self.retrybtn_size[1])/2))
+
+menuConfig = MenuConfig()
+
+def draw_menu(surface, font = font):
+    left = (config.width-MenuConfig.width)/2
+    top = (config.height-MenuConfig.height)/2
+    menu= pygame.Rect(left, top, MenuConfig.width, MenuConfig.height)
+    pygame.draw.rect(surface, (180, 180, 180), menu)
+    retry_btn = pygame.Rect(menuConfig.retrybtn_pos, menuConfig.retrybtn_size)
+    pygame.draw.rect(surface, (180, 180, 180), retry_btn)
+    pygame.draw.rect(surface, (0, 0, 0), retry_btn, 1)
+    retry_text_surface = font.render("Retry", True, (0,0,0))
+    retry_text_rect = retry_text_surface.get_rect(center=retry_btn.center)
+    surface.blit(retry_text_surface, retry_text_rect)
+
 moves = 0
 
 game_over = False
 has_won = False
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -100,14 +125,26 @@ while True:
                 if event.button == 1:
                     if 0 <= x < board.size and 0 <= y < board.size:
                         if moves == 0:
-                            board = MinesweeperAPI(board_dimensions, bomb_percentage, [(x,y)])
+                            board = MinesweeperAPI(board_dimensions, bomb_percentage, [(x,y), [0, 0]])
                         _, died = board.reveal(x, y)
                         moves += 1
                         game_over = died
                         has_won = board.has_won(died)
                 elif event.button == 3:
                     board.flag(x, y)
+        else:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+                if menuConfig.retrybtn_pos[0] < x < menuConfig.retrybtn_pos[0] + menuConfig.retrybtn_size[0]:
+                    print("reset")
+                    board = MinesweeperAPI(board_dimensions, bomb_percentage)
+                    has_won = False
+                    game_over = False
+                    moves = 0
+
     screen.fill((0,0,0))
     draw_board(screen, board)
+    if game_over or has_won:
+        draw_menu(screen)
     pygame.display.flip()
     clock.tick(60)

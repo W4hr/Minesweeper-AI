@@ -1,4 +1,4 @@
-from trainingsdata import MinesweeperBoard
+from generator import MinesweeperBoard
 
 class MinesweeperAPI(MinesweeperBoard):
     HIDDEN = -1
@@ -7,6 +7,7 @@ class MinesweeperAPI(MinesweeperBoard):
     def __init__(self, dimension, bomb_percentage = 15, revealed = []):
         super().__init__(dimension, bomb_percentage, revealed)
         self.set_hidden_board()
+        self.moves = 0
 
     def set_hidden_board(self):
         hidden_board = [[self.HIDDEN] * self.size for _ in range(self.size)]
@@ -27,12 +28,15 @@ class MinesweeperAPI(MinesweeperBoard):
             return self.hidden_board, False
         elif cell == self.BOMB:
             self.hidden_board = [row[:] for row in self.number_board]
+            self.moves += 1
             print("Died ☠")
             return self.number_board, True
         elif cell > 0:
+            self.moves += 1
             self.hidden_board[y][x] = self.number_board[y][x]
             return self.hidden_board, False
         elif cell == 0:
+            self.moves += 1
             self.revealZero(x, y)
             return self.hidden_board, False
             
@@ -81,9 +85,14 @@ class MinesweeperAPI(MinesweeperBoard):
     def __str__(self):
         hidden_board = [[self.convert(cell) for cell in row] for row in self.hidden_board]
         return self.stringify_board(hidden_board)
+    
+    def reset(self):
+        self.moves = 0
+        self.set_hidden_board()
 
 if __name__ == "__main__":
-    board = MinesweeperAPI(10)
+    board = MinesweeperAPI(11, 20, [[1,2]])
+    print(board.stringify_board(board.get_out_of_bounds_neighborhood(board.number_board, 0, 0, 1)))
     print(board.stringify_board(board.get_number_board()))
     print(board)
     while True:
