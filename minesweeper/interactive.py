@@ -13,6 +13,8 @@ class MinesweeperAPI(MinesweeperBoard):
         return self.hidden_board
 
     def reveal(self, x, y, is_initial = True):
+        if self.moves == 0:
+            self.safe_game(x, y)
         if not (0 <= x < self.size and 0 <= y < self.size):
             raise IndexError
         cell = self.number_board[y][x]
@@ -87,6 +89,9 @@ class MinesweeperAPI(MinesweeperBoard):
     def reset(self):
         self.moves = 0
         self.set_hidden_board()
+
+    def safe_game(self, x, y):
+        self.__init__(self.size, self.bomb_percentage, [(x, y)])
 
 if __name__ == "__main__":
     board = MinesweeperAPI(11, 20, [[1,2]])

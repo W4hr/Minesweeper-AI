@@ -31,6 +31,7 @@ class MinesweeperBoard:
 
         self.binary_vector = binary_vector
         self.size = dimension
+        self.bomb_percentage = bomb_percentage
         self._generate_number_vector()
         self.number_board = self.get_number_board()
 

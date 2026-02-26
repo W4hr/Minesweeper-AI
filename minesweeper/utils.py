@@ -14,10 +14,8 @@ def bordered(text):
     res.append('└' + '─' * (width+2) + '┘')
     return '\n'.join(res)
 
-def stringify_board(self, board: List[List[int]], bomb = None):
+def stringify_board(board: List[List[int]], bomb = None):
     joined_board = ""
-    if bomb is None:
-        bomb = self.BOMB
     for i in board:
         joined_board += " ".join([str(j) if j != bomb else "*" for j in i]) + "\n"
     return bordered(joined_board)
