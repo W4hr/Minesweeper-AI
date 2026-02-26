@@ -11,6 +11,9 @@ class Config:
 
     UNKNOWN_PROB = -1
 
+    BOARD_CELL = "board"
+    PREDICTION_CELL = "prediction"
+
     # CONTENT
     # SIZING
     WIDTH = 1000
@@ -38,6 +41,7 @@ class Config:
     BACKGROUND = (180, 180, 180)
     BORDER_COLOR = (0, 0, 0)
     COLOR = (0, 0, 0)
+    AI_SOLVED_BORDER_COLOR = (255, 255, 0)
 
     def __init__(self):
         pygame.init()
@@ -54,6 +58,6 @@ class Config:
         self.WAND_IMG = pygame.transform.scale(self.WAND_IMG, (int(self.CELL_WIDTH * 0.5), int(self.CELL_HEIGHT * 0.5)))
 
         self.FONT = pygame.font.Font("ui/fonts/Minecraft.ttf", int(self.CELL_HEIGHT * 0.8))
-        self.SMALL_FONT = pygame.font.Font("ui/fonts/Minecraft.ttf", int(self.CELL_HEIGHT * 0.4))
+        self.SMALL_FONT = pygame.font.Font("ui/fonts/Minecraft.ttf", int(self.CELL_HEIGHT * 0.3))
 
 config = Config()

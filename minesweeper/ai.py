@@ -6,16 +6,18 @@ from sklearn.metrics import mean_squared_error, root_mean_squared_error
 import numpy as np
 
 class MinesweeperAI:
-    def __init__(self, radius_neighborhood, trainingsdata_amount, bomb_percentage = 15):
+    def __init__(self, radius_neighborhood, trainingsdata_amount = 10000, bomb_percentage = 15):
         board_dimension = radius_neighborhood * 2 + 1
         X = [] # Input
         Y = [] # Expected Ouput
+        print("Generating trainingsdata...")
         while len(X) < trainingsdata_amount:
             result = getTraingsdata(board_dimension + 2, bomb_percentage, radius_neighborhood)
             if len(result) == 0: continue
             x, y = result
             X.append(x)
             Y.append(y)
+        print("Successfully generated trainingsdata")
         X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=42, shuffle=True)
         self.X_train = X_train
         self.X_test = X_test
@@ -25,7 +27,7 @@ class MinesweeperAI:
         self.model = None
         
     def train(self):
-        model = LogisticRegression()
+        model = LogisticRegression(random_state=42, class_weight='balanced')
         print("Training Model")
         model.fit(self.X_train, self.y_train)
         print("Model trained")
@@ -37,7 +39,7 @@ class MinesweeperAI:
         self.bias = model.intercept_
         self.model = model
     
-    def test(self, board: MinesweeperAPI, coordinates):
+    def predict(self, board: MinesweeperAPI, coordinates):
         if self.model is None:
             self.train()
         x, y = coordinates
@@ -71,10 +73,11 @@ def getTraingsdata(board_dimension, bomb_percentage, radius):
     return traindata
 
 
-#print(getTraingsdata(11, 15, 2))
+if __name__ == "__main__":
+    #print(getTraingsdata(11, 15, 2))
 
-ai = MinesweeperAI(5, 50, 15)
-ai.train()
-board = MinesweeperAPI(2)
-print(ai.X_test)
-print()
+    ai = MinesweeperAI(5, 50, 15)
+    ai.train()
+    board = MinesweeperAPI(2)
+    print(ai.X_test)
+    print()

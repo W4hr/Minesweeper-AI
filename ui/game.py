@@ -4,7 +4,7 @@ import sys
 import time
 from ui.renderer import Renderer
 from minesweeper.interactive import MinesweeperAPI
-from minesweeper.ai import MinesweeperAI
+from minesweeper.utils import round_prediction
 
 from minesweeper.utils import stringify_board
 
@@ -15,14 +15,19 @@ class Game:
         pygame.display.set_caption("MinesweeperAI")
         self.clock = pygame.time.Clock()
         self.renderer = Renderer()
-        self.board = MinesweeperAPI(config.BOARD_SIZE)
+        self.board = MinesweeperAPI(config.BOARD_SIZE, radius=4, trainingsdata_amount=10000)
         self.click_mode = config.CLICK_NORMAL
-        self.ai = MinesweeperAI(5, 500)
         self.reset_predictions()
+        self.ai_revealed = []
 
     def reset_predictions(self):
         self.predictions = [[config.UNKNOWN_PROB for _ in range(config.BOARD_SIZE)] for _ in range(config.BOARD_SIZE)]
     
+    def reset(self):
+        self.board.reset()
+        self.reset_predictions()
+        self.ai_revealed = []
+
     def set_predictions(self, x, y, value):
         self.predictions[y][x] = value
 
@@ -32,6 +37,16 @@ class Game:
         by = self.renderer.board_y
         return int((mx - bx) // config.CELL_WIDTH), int((my - by) // config.CELL_HEIGHT)
 
+    def filtered_predictions(self):
+        return [
+                [
+                    self.predictions[y][x] if self.board.hidden_board[y][x] == -1 else config.UNKNOWN_PROB
+                    for x in range(config.BOARD_SIZE)
+                ]
+                for y in range(config.BOARD_SIZE)
+            ]
+
+    
     def run(self):
         while True:
             for event in pygame.event.get():
@@ -40,16 +55,26 @@ class Game:
                     sys.exit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if self.renderer.reset_rect.collidepoint(event.pos):
-                        self.board.reset()
-                        self.reset_predictions()
+                        self.reset()
                     elif self.renderer.ai_solve_rect.collidepoint(event.pos):
-                        pass
+                        for _ in range(10):
+                            picked_coordinates = self.board.ai_move()
+                            if picked_coordinates:
+                                self.ai_revealed.append(picked_coordinates)
                     elif self.renderer.ai_pred_rect.collidepoint(event.pos):
                         if self.click_mode != config.CLICK_AI_PRED:
                             print("AI-Predict-Mode activated")
                             self.click_mode = config.CLICK_AI_PRED
                         elif self.click_mode == config.CLICK_AI_PRED:
                             self.click_mode = config.CLICK_NORMAL
+                    elif self.renderer.auto_reveal.collidepoint(event.pos):
+                        self.predictions = self.board.predict_all()
+                    elif self.renderer.ai_move.collidepoint(event.pos):
+                        picked_coordinates = self.board.ai_move()
+                        print(picked_coordinates)
+                        if picked_coordinates:
+                            self.ai_revealed.append(picked_coordinates)
+                        self.reset_predictions()
                     elif self.renderer.quit_rect.collidepoint(event.pos):
                         pygame.quit()
                         sys.exit()
@@ -60,18 +85,22 @@ class Game:
                                 if event.button == config.REVEAL_BUTTON:
                                     _, died = self.board.reveal(x, y)
                                     self.reset_predictions()
-                                    if died: print(stringify_board(self.board.hidden_board))
+                                    if died: 
+                                        print(stringify_board(self.board.hidden_board))
+                                        self.renderer.draw_ai_revealed(self.screen, self.ai_revealed)
                                 elif event.button == config.FLAG_BUTTON:
                                     self.board.flag(x, y)
                             elif self.click_mode == config.CLICK_AI_PRED:
-                                prediction = self.ai.test(self.board, (x, y))
-                                self.set_predictions(x, y, round(prediction[:,1][0] * 100, 2))
+                                prediction = round_prediction(self.board.predict((x, y)))
+                                self.set_predictions(x, y, prediction)
                                 self.click_mode = config.CLICK_NORMAL
             self.screen.fill((0, 0, 0))
             self.renderer.draw_board(self.screen, self.board.hidden_board)
-            self.renderer.draw_predictions(self.screen, self.predictions)
+            self.renderer.draw_predictions(self.screen, self.filtered_predictions())
+            self.renderer.draw_ai_revealed(self.screen, self.ai_revealed)
             self.renderer.draw_menu(self.screen)
             self.renderer.draw_cursor(self.click_mode, self.screen, pygame.mouse.get_pos())
+
             pygame.display.flip()
             self.clock.tick(config.FPS)
 

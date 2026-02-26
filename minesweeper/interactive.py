@@ -1,11 +1,14 @@
 from minesweeper.generator import MinesweeperBoard
-from minesweeper.utils import stringify_board
+from minesweeper.utils import stringify_board, round_prediction
 
 class MinesweeperAPI(MinesweeperBoard):
-    def __init__(self, dimension, bomb_percentage = 15, revealed = []):
+    def __init__(self, dimension, bomb_percentage = 15, revealed = [], radius = 5, trainingsdata_amount = 500):
         super().__init__(dimension, bomb_percentage, revealed)
         self.set_hidden_board()
         self.moves = 0
+        self.radius = radius
+        self.trainingsdata_amount = trainingsdata_amount
+        self.ai = None
 
     def set_hidden_board(self):
         hidden_board = [[self.HIDDEN] * self.size for _ in range(self.size)]
@@ -91,7 +94,55 @@ class MinesweeperAPI(MinesweeperBoard):
         self.set_hidden_board()
 
     def safe_game(self, x, y):
-        self.__init__(self.size, self.bomb_percentage, [(x, y)])
+        radius = self.radius
+        trainingsdata_amount = self.trainingsdata_amount
+        ai = self.ai
+        self.__init__(self.size, self.bomb_percentage, [(x, y)], radius, trainingsdata_amount)
+        self.ai = ai
+
+    def predict(self, coordinates):
+        if self.ai is None:
+            from minesweeper.ai import MinesweeperAI
+            self.ai = MinesweeperAI(self.radius, self.trainingsdata_amount, self.bomb_percentage)
+        return self.ai.predict(self, coordinates)[:, 1][0]
+    
+    def predict_all(self):
+        predictions = []
+        for y, row in enumerate(self.hidden_board):
+            current_row = []
+            for x, cell in enumerate(row):
+                if cell == self.HIDDEN:
+                    prediction = self.predict((x, y))
+                    current_row.append(round_prediction(prediction))
+                else:
+                    current_row.append(-1)
+            predictions.append(current_row)
+        return predictions
+    
+    def ai_move(self, flagging = False):
+        predictions = self.predict_all()
+        print(stringify_board(predictions))
+        smallest = 100
+        smallest_coordinates = None
+        largest = 0
+        largest_coordinates = None
+        for y, row in enumerate(predictions):
+            for x, cell in enumerate(row):
+                if cell < smallest and 0 < cell < 100:
+                    smallest = cell
+                    smallest_coordinates = (x, y)
+                elif cell > largest and 0 < cell < 100:
+                    largest = cell
+                    largest_coordinates = (x, y)
+        print(smallest_coordinates)
+        if smallest_coordinates is None or largest_coordinates is None:
+            return
+        if flagging and 1 - largest < smallest:
+            self.flag(largest_coordinates[0], largest_coordinates[1])
+            return largest_coordinates
+        else:
+            self.reveal(smallest_coordinates[0], smallest_coordinates[1])
+            return smallest_coordinates
 
 if __name__ == "__main__":
     board = MinesweeperAPI(11, 20, [[1,2]])

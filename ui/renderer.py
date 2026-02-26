@@ -1,6 +1,8 @@
 import pygame
 from ui.config import config
 from minesweeper.generator import MinesweeperBoard
+from typing import List, Tuple
+from minesweeper.utils import probability_to_color
 
 class Renderer:
     def __init__(self):
@@ -9,13 +11,26 @@ class Renderer:
         self.reset_rect = pygame.Rect(0, 0, 0, 0)
         self.ai_solve_rect = pygame.Rect(0, 0, 0, 0)
 
-    def draw_cell(self, surface, left, top, content, font = config.FONT):
-        if content in config.COLOR_MAP.keys():
+    def draw_cell(self, surface, left, top, content, font = config.FONT, cell_type = config.BOARD_CELL):
+        rect = pygame.Rect(left, top, config.CELL_WIDTH, config.CELL_WIDTH)
+
+        if cell_type == config.PREDICTION_CELL:
+            prob_color = probability_to_color(float(content))
+            pygame.draw.rect(surface, prob_color, rect, config.BORDER_WIDTH * 2)
+            display = font.render(f"{float(content):.0f}", True, config.COLOR)
+            display_rect = display.get_rect(center=rect.center)
+            surface.blit(display, display_rect)
+            return
+
+        if content in config.COLOR_MAP.keys() and cell_type != config.PREDICTION_CELL:
             color = config.COLOR_MAP[content]
         else:
             color = (0, 0, 0)
 
-        rect = pygame.Rect(left, top, config.CELL_WIDTH, config.CELL_WIDTH)
+        BORDER_COLOR = config.BORDER_COLOR
+        if cell_type == config.PREDICTION_CELL:
+            BORDER_COLOR = probability_to_color(float(content))
+
         display = None
         if content == MinesweeperBoard.HIDDEN:
             background = config.BACKGROUND_HIDDEN
@@ -31,7 +46,7 @@ class Renderer:
                 display = font.render(str(content), True, color)
 
         pygame.draw.rect(surface, background, rect)
-        pygame.draw.rect(surface, config.BORDER_COLOR, rect, config.BORDER_WIDTH) # Border
+        pygame.draw.rect(surface, BORDER_COLOR, rect, config.BORDER_WIDTH) # Border
 
         if display:
             display_rect = display.get_rect(center=rect.center)
@@ -57,6 +72,8 @@ class Renderer:
         self.reset_rect = self.draw_button(margin, button_height * 0 + margin * 1, button_width, button_height, "RESET", surface)
         self.ai_solve_rect = self.draw_button(margin, button_height * 1 + margin * 2, button_width, button_height, "AI SOLVE", surface)
         self.ai_pred_rect = self.draw_button(margin, button_height * 2 + margin * 3, button_width, button_height, "AI PREDICT", surface)
+        self.auto_reveal = self.draw_button(margin, button_height * 3 + margin * 4, button_width, button_height, "AUTO-REVEAL", surface)
+        self.ai_move = self.draw_button(margin, button_height * 4 + margin * 5, button_width, button_height, "AI MOVE", surface)
         self.quit_rect = self.draw_button(margin, config.HEIGHT - margin - button_height, button_width, button_height, "QUIT", surface)
 
 
@@ -85,4 +102,15 @@ class Renderer:
                 if cell != config.UNKNOWN_PROB:
                     left = self.board_x + x * config.CELL_WIDTH
                     top = self.board_y + y * config.CELL_HEIGHT
-                    self.draw_cell(surface, left, top, cell, config.SMALL_FONT)
+                    self.draw_cell(surface, left, top, cell, config.SMALL_FONT, config.PREDICTION_CELL)
+
+    def draw_border(self, surface, x, y, border_color = config.BORDER_COLOR, border_width = config.BORDER_WIDTH):
+        left = self.board_x + x * config.CELL_WIDTH
+        top = self.board_y + y * config.CELL_HEIGHT
+        rect = pygame.Rect(left, top, config.CELL_WIDTH, config.CELL_WIDTH)
+        pygame.draw.rect(surface, border_color, rect, border_width) # Border
+
+    def draw_ai_revealed(self, surface, ai_revealed: List[Tuple]):
+        for revealed in ai_revealed:
+            x, y = revealed
+            self.draw_border(surface, x, y, config.AI_SOLVED_BORDER_COLOR, config.BORDER_WIDTH * 3)
