@@ -9,7 +9,7 @@ class Renderer:
         self.reset_rect = pygame.Rect(0, 0, 0, 0)
         self.ai_solve_rect = pygame.Rect(0, 0, 0, 0)
 
-    def draw_cell(self, surface, left, top, content):
+    def draw_cell(self, surface, left, top, content, font = config.FONT):
         if content in config.COLOR_MAP.keys():
             color = config.COLOR_MAP[content]
         else:
@@ -28,7 +28,7 @@ class Renderer:
         else:
             background = config.BACKGROUND_REVEALED
             if content > 0:
-                display = config.FONT.render(str(content), True, color)
+                display = font.render(str(content), True, color)
 
         pygame.draw.rect(surface, background, rect)
         pygame.draw.rect(surface, config.BORDER_COLOR, rect, config.BORDER_WIDTH) # Border
@@ -51,11 +51,12 @@ class Renderer:
     
     def draw_menu(self, surface):
         menu_width = self.board_x
-        margin = 10
+        margin = config.MENU_MARGIN
         button_height = config.WIDTH/12
         button_width = menu_width - 2 * margin
-        self.reset_rect = self.draw_button(margin, button_height * 1, button_width, button_height, "RESET", surface)
-        self.ai_solve_rect = self.draw_button(margin, button_height * 2.5, button_width, button_height, "AI SOLVE", surface)
+        self.reset_rect = self.draw_button(margin, button_height * 0 + margin * 1, button_width, button_height, "RESET", surface)
+        self.ai_solve_rect = self.draw_button(margin, button_height * 1 + margin * 2, button_width, button_height, "AI SOLVE", surface)
+        self.ai_pred_rect = self.draw_button(margin, button_height * 2 + margin * 3, button_width, button_height, "AI PREDICT", surface)
         self.quit_rect = self.draw_button(margin, config.HEIGHT - margin - button_height, button_width, button_height, "QUIT", surface)
 
 
@@ -67,3 +68,21 @@ class Renderer:
         txt_rect = txt_surface.get_rect(center=btn_rect.center)
         surface.blit(txt_surface, txt_rect)
         return btn_rect
+    
+    def draw_cursor(self, mode, surface, pos):
+        if mode == config.CLICK_AI_PRED:
+            pygame.mouse.set_visible(False)
+            cursor_img_rect = config.WAND_IMG.get_rect()
+            cursor_img_rect.center = pos
+            surface.blit(config.WAND_IMG, cursor_img_rect)
+            self.ai_cursor_rect = cursor_img_rect
+        else:
+            pygame.mouse.set_visible(True)
+    
+    def draw_predictions(self, surface, matrix):
+        for y, row in enumerate(matrix):
+            for x, cell in enumerate(row):
+                if cell != config.UNKNOWN_PROB:
+                    left = self.board_x + x * config.CELL_WIDTH
+                    top = self.board_y + y * config.CELL_HEIGHT
+                    self.draw_cell(surface, left, top, cell, config.SMALL_FONT)

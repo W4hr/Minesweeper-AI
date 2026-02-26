@@ -6,14 +6,19 @@ class Config:
     BOARD_SIZE = 10
     REVEAL_BUTTON = 1 # Left click
     FLAG_BUTTON = 3 # Right click
+    CLICK_NORMAL = 'normal'
+    CLICK_AI_PRED = 'pred'
+
+    UNKNOWN_PROB = -1
 
     # CONTENT
     # SIZING
-    WIDTH = 1200
-    HEIGHT = 800
+    WIDTH = 1000
+    HEIGHT = 600
     CELL_HEIGHT = 40
     CELL_WIDTH = 40
 
+    MENU_MARGIN = 10
     BORDER_WIDTH = 1
 
     # STYLING
@@ -45,7 +50,10 @@ class Config:
         self.FLAG_IMG = pygame.image.load("ui/graphics/flag.png")
         self.FLAG_IMG = pygame.transform.scale(self.FLAG_IMG, (int(self.CELL_WIDTH * 0.8), int(self.CELL_HEIGHT * 0.8)))
 
-        self.FONT = pygame.font.Font("ui/fonts/Minecraft.ttf", int(self.CELL_HEIGHT * 0.8))
+        self.WAND_IMG = pygame.image.load("ui/graphics/wand.png")
+        self.WAND_IMG = pygame.transform.scale(self.WAND_IMG, (int(self.CELL_WIDTH * 0.5), int(self.CELL_HEIGHT * 0.5)))
 
+        self.FONT = pygame.font.Font("ui/fonts/Minecraft.ttf", int(self.CELL_HEIGHT * 0.8))
+        self.SMALL_FONT = pygame.font.Font("ui/fonts/Minecraft.ttf", int(self.CELL_HEIGHT * 0.4))
 
 config = Config()
