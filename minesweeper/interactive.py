@@ -2,13 +2,16 @@ from minesweeper.generator import MinesweeperBoard
 from minesweeper.utils import stringify_board, round_prediction
 
 class MinesweeperAPI(MinesweeperBoard):
-    def __init__(self, dimension, bomb_percentage = 15, revealed = [], radius = 5, trainingsdata_amount = 500):
+    def __init__(self, dimension, bomb_percentage = 15, revealed = [], radius = 5, trainingsdata_amount = 500, include_bomb_count = False, include_hidden_count = False):
         super().__init__(dimension, bomb_percentage, revealed)
         self.set_hidden_board()
         self.moves = 0
         self.radius = radius
         self.trainingsdata_amount = trainingsdata_amount
         self.ai = None
+        self.has_died = False
+        self.include_bomb_count = include_bomb_count
+        self.include_hidden_count = include_hidden_count
 
     def set_hidden_board(self):
         hidden_board = [[self.HIDDEN] * self.size for _ in range(self.size)]
@@ -32,6 +35,7 @@ class MinesweeperAPI(MinesweeperBoard):
         elif cell == self.BOMB:
             self.hidden_board = [row[:] for row in self.number_board]
             self.moves += 1
+            self.has_died = True
             print("Died ☠")
             return self.number_board, True
         elif cell > 0:
@@ -82,7 +86,6 @@ class MinesweeperAPI(MinesweeperBoard):
     def has_won(self, died = False):
         if died: return
         has_won = self.get_hidden_cell_count() == 0
-        if (has_won): print("You won!")
         return has_won
 
     def __str__(self):
@@ -92,6 +95,7 @@ class MinesweeperAPI(MinesweeperBoard):
     def reset(self):
         self.moves = 0
         self.set_hidden_board()
+        self.has_died = False
 
     def safe_game(self, x, y):
         radius = self.radius
@@ -103,7 +107,7 @@ class MinesweeperAPI(MinesweeperBoard):
     def predict(self, coordinates):
         if self.ai is None:
             from minesweeper.ai import MinesweeperAI
-            self.ai = MinesweeperAI(self.radius, self.trainingsdata_amount, self.bomb_percentage)
+            self.ai = MinesweeperAI(self.radius, self.trainingsdata_amount, self.bomb_percentage, self.include_bomb_count, self.include_hidden_count)
         return self.ai.predict(self, coordinates)[:, 1][0]
     
     def predict_all(self):
@@ -143,6 +147,28 @@ class MinesweeperAPI(MinesweeperBoard):
         else:
             self.reveal(smallest_coordinates[0], smallest_coordinates[1])
             return smallest_coordinates
+        
+    def count_elements(self, matrix, element):
+        count = 0
+        for row in matrix:
+            for cell in row:
+                if cell == element:
+                    count += 1
+        return count
+
+    def get_flag_count(self, matrix = None):
+        if matrix is None:
+            matrix = self.hidden_board
+        return self.count_elements(matrix, self.FLAG)
+    
+    def get_revealed_count(self, matrix = None):
+        if matrix is None:
+            matrix = self.hidden_board
+        for row in matrix:
+            for cell in row:
+                if 0 <= cell <= 8:
+                    count += 1
+        return count
 
 if __name__ == "__main__":
     board = MinesweeperAPI(11, 20, [[1,2]])

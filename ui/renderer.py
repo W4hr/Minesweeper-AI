@@ -64,23 +64,31 @@ class Renderer:
         self.board_x = origin_x
         self.board_y = origin_y
     
-    def draw_menu(self, surface):
+    def draw_menu(self, surface, has_won, has_died, bomb_count):
         menu_width = self.board_x
         margin = config.MENU_MARGIN
-        button_height = config.WIDTH/12
+        button_height = config.WIDTH/16
         button_width = menu_width - 2 * margin
-        self.reset_rect = self.draw_button(margin, button_height * 0 + margin * 1, button_width, button_height, "RESET", surface)
-        self.ai_solve_rect = self.draw_button(margin, button_height * 1 + margin * 2, button_width, button_height, "AI SOLVE", surface)
-        self.ai_pred_rect = self.draw_button(margin, button_height * 2 + margin * 3, button_width, button_height, "AI PREDICT", surface)
-        self.auto_reveal = self.draw_button(margin, button_height * 3 + margin * 4, button_width, button_height, "AUTO-REVEAL", surface)
-        self.ai_move = self.draw_button(margin, button_height * 4 + margin * 5, button_width, button_height, "AI MOVE", surface)
+
+        status_text = "playing"
+        if has_won:
+            status_text = "you won"
+        if has_died:
+            status_text = "you died"
+        self.status_rect = self.draw_button(margin, button_height * 0 + margin * 1, (button_width - margin)/2, button_height, status_text, surface, config.GAME_STATUS_BACKGROUND, 20)
+        self.bomb_count_rect = self.draw_button(margin*2 + (button_width - margin)/2, button_height * 0 + margin * 1, (button_width - margin)/2 , button_height, f"{bomb_count}", surface, config.BOMB_COUNT_BACKGROUND, 20)
+        self.reset_rect = self.draw_button(margin, button_height * 1 + margin * 2, button_width, button_height, "RESET", surface)
+        self.ai_solve_rect = self.draw_button(margin, button_height * 2 + margin * 3, button_width, button_height, "AI SOLVE", surface)
+        self.ai_pred_rect = self.draw_button(margin, button_height * 3 + margin * 4, button_width, button_height, "AI PREDICT", surface)
+        self.auto_pred = self.draw_button(margin, button_height * 4 + margin * 5, button_width, button_height, "AUTO-PREDICT", surface)
+        self.ai_move = self.draw_button(margin, button_height * 5 + margin * 6, button_width, button_height, "AI MOVE", surface)
         self.quit_rect = self.draw_button(margin, config.HEIGHT - margin - button_height, button_width, button_height, "QUIT", surface)
 
 
-    def draw_button(self, left, top, width, height, text, surface):
+    def draw_button(self, left, top, width, height, text, surface, background_color = config.BACKGROUND, border_radius = -1):
         btn_rect = pygame.rect.Rect(left, top, width, height)
-        pygame.draw.rect(surface, config.BACKGROUND, btn_rect)
-        pygame.draw.rect(surface, config.BORDER_COLOR, btn_rect, config.BORDER_WIDTH)
+        pygame.draw.rect(surface, background_color, btn_rect, border_radius=border_radius)
+        pygame.draw.rect(surface, config.BORDER_COLOR, btn_rect, config.BORDER_WIDTH, border_radius=border_radius)
         txt_surface = config.FONT.render(text, True, config.COLOR)
         txt_rect = txt_surface.get_rect(center=btn_rect.center)
         surface.blit(txt_surface, txt_rect)

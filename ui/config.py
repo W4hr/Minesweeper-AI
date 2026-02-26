@@ -14,6 +14,8 @@ class Config:
     BOARD_CELL = "board"
     PREDICTION_CELL = "prediction"
 
+    DELAY_AI_SOLVE = 500 # in ms
+
     # CONTENT
     # SIZING
     WIDTH = 1000
@@ -42,6 +44,8 @@ class Config:
     BORDER_COLOR = (0, 0, 0)
     COLOR = (0, 0, 0)
     AI_SOLVED_BORDER_COLOR = (255, 255, 0)
+    GAME_STATUS_BACKGROUND = (0, 120, 0)
+    BOMB_COUNT_BACKGROUND = (120, 0, 0)
 
     def __init__(self):
         pygame.init()

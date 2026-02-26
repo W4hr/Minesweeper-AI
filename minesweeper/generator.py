@@ -32,6 +32,7 @@ class MinesweeperBoard:
         self.binary_vector = binary_vector
         self.size = dimension
         self.bomb_percentage = bomb_percentage
+        self.bomb_count = bomb_count
         self._generate_number_vector()
         self.number_board = self.get_number_board()
 
@@ -75,7 +76,7 @@ class MinesweeperBoard:
 
         return neighborhood
     
-    def get_out_of_bounds_neighborhood(self, matrix, x, y, area_around = 1):
+    def get_out_of_bounds_neighborhood(self, matrix, x, y, area_around = 1) -> List[List]:
         x_start = x - area_around
         x_end = x + area_around
         y_start = y - area_around

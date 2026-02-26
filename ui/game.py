@@ -15,10 +15,12 @@ class Game:
         pygame.display.set_caption("MinesweeperAI")
         self.clock = pygame.time.Clock()
         self.renderer = Renderer()
-        self.board = MinesweeperAPI(config.BOARD_SIZE, radius=4, trainingsdata_amount=10000)
+        self.board = MinesweeperAPI(config.BOARD_SIZE, radius = 4, trainingsdata_amount = 60000, include_bomb_count = True, include_hidden_count = True)
         self.click_mode = config.CLICK_NORMAL
         self.reset_predictions()
         self.ai_revealed = []
+        self.ai_solving = False
+        self.last_ai_move = 0
 
     def reset_predictions(self):
         self.predictions = [[config.UNKNOWN_PROB for _ in range(config.BOARD_SIZE)] for _ in range(config.BOARD_SIZE)]
@@ -57,17 +59,14 @@ class Game:
                     if self.renderer.reset_rect.collidepoint(event.pos):
                         self.reset()
                     elif self.renderer.ai_solve_rect.collidepoint(event.pos):
-                        for _ in range(10):
-                            picked_coordinates = self.board.ai_move()
-                            if picked_coordinates:
-                                self.ai_revealed.append(picked_coordinates)
+                        self.ai_solving = not self.ai_solving
                     elif self.renderer.ai_pred_rect.collidepoint(event.pos):
                         if self.click_mode != config.CLICK_AI_PRED:
                             print("AI-Predict-Mode activated")
                             self.click_mode = config.CLICK_AI_PRED
                         elif self.click_mode == config.CLICK_AI_PRED:
                             self.click_mode = config.CLICK_NORMAL
-                    elif self.renderer.auto_reveal.collidepoint(event.pos):
+                    elif self.renderer.auto_pred.collidepoint(event.pos):
                         self.predictions = self.board.predict_all()
                     elif self.renderer.ai_move.collidepoint(event.pos):
                         picked_coordinates = self.board.ai_move()
@@ -94,11 +93,18 @@ class Game:
                                 prediction = round_prediction(self.board.predict((x, y)))
                                 self.set_predictions(x, y, prediction)
                                 self.click_mode = config.CLICK_NORMAL
+            if self.ai_solving and not self.board.has_died and not self.board.has_won():
+                current_time = time.time()
+                if current_time - self.last_ai_move > config.DELAY_AI_SOLVE / 1000:
+                    picked_coordinates = self.board.ai_move()
+                    if picked_coordinates:
+                        self.ai_revealed.append(picked_coordinates)
+                    self.last_ai_move = current_time
             self.screen.fill((0, 0, 0))
             self.renderer.draw_board(self.screen, self.board.hidden_board)
             self.renderer.draw_predictions(self.screen, self.filtered_predictions())
             self.renderer.draw_ai_revealed(self.screen, self.ai_revealed)
-            self.renderer.draw_menu(self.screen)
+            self.renderer.draw_menu(self.screen, self.board.has_won(), self.board.has_died, self.board.bomb_count - self.board.get_flag_count())
             self.renderer.draw_cursor(self.click_mode, self.screen, pygame.mouse.get_pos())
 
             pygame.display.flip()
