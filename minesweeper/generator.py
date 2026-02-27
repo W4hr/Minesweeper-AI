@@ -2,6 +2,7 @@ import random as rd
 import math
 from typing import List
 from minesweeper.utils import stringify_board
+from minesweeper.config import config
 
 
 class MinesweeperBoard:
@@ -14,7 +15,12 @@ class MinesweeperBoard:
     FLAG = -3
     OUT_OF_BOUNDS = -4
 
-    def __init__(self, dimension: int = 5, bomb_percentage: float = 15, revealed = None):
+    def __init__(
+        self,
+        dimension: int = config.DEFAULT_BOARD_DIMENSION,
+        bomb_percentage: float = config.DEFAULT_BOMB_PERCENTAGE,
+        revealed=None,
+    ):
         if revealed is None:
             revealed = []
         # revealed = list(set(revealed))

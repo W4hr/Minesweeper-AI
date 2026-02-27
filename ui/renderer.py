@@ -94,15 +94,18 @@ class Renderer:
         surface.blit(txt_surface, txt_rect)
         return btn_rect
     
-    def draw_cursor(self, mode, surface, pos):
+    def draw_cursor(self, mode, surface, pos, ai_solving):
         if mode == config.CLICK_AI_PRED:
             pygame.mouse.set_visible(False)
             cursor_img_rect = config.WAND_IMG.get_rect()
             cursor_img_rect.center = pos
             surface.blit(config.WAND_IMG, cursor_img_rect)
             self.ai_cursor_rect = cursor_img_rect
+        elif ai_solving:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_NO)
         else:
             pygame.mouse.set_visible(True)
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
     
     def draw_predictions(self, surface, matrix):
         for y, row in enumerate(matrix):

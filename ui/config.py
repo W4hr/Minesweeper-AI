@@ -14,7 +14,7 @@ class Config:
     BOARD_CELL = "board"
     PREDICTION_CELL = "prediction"
 
-    DELAY_AI_SOLVE = 500 # in ms
+    DELAY_AI_SOLVE = 0 # in ms
 
     # CONTENT
     # SIZING
@@ -60,6 +60,9 @@ class Config:
 
         self.WAND_IMG = pygame.image.load("ui/graphics/wand.png")
         self.WAND_IMG = pygame.transform.scale(self.WAND_IMG, (int(self.CELL_WIDTH * 0.5), int(self.CELL_HEIGHT * 0.5)))
+
+        self.ROBOT_IMG = pygame.image.load("ui/graphics/robot.png")
+        self.ROBOT_IMG = pygame.transform.scale(self.ROBOT_IMG, (int(self.CELL_WIDTH * 0.5), int(self.CELL_HEIGHT * 0.5)))
 
         self.FONT = pygame.font.Font("ui/fonts/Minecraft.ttf", int(self.CELL_HEIGHT * 0.8))
         self.SMALL_FONT = pygame.font.Font("ui/fonts/Minecraft.ttf", int(self.CELL_HEIGHT * 0.3))

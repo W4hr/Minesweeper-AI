@@ -5,6 +5,7 @@ import time
 from ui.renderer import Renderer
 from minesweeper.interactive import MinesweeperAPI
 from minesweeper.utils import round_prediction
+from minesweeper.stats import stats
 
 from minesweeper.utils import stringify_board
 
@@ -15,7 +16,7 @@ class Game:
         pygame.display.set_caption("MinesweeperAI")
         self.clock = pygame.time.Clock()
         self.renderer = Renderer()
-        self.board = MinesweeperAPI(config.BOARD_SIZE, radius = 4, trainingsdata_amount = 60000, include_bomb_count = True, include_hidden_count = True)
+        self.board = MinesweeperAPI()
         self.click_mode = config.CLICK_NORMAL
         self.reset_predictions()
         self.ai_revealed = []
@@ -47,14 +48,16 @@ class Game:
                 ]
                 for y in range(config.BOARD_SIZE)
             ]
-
+    def quit(self):
+        stats.save()
+        pygame.quit()
+        sys.exit()
     
     def run(self):
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
+                    self.quit()
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if self.renderer.reset_rect.collidepoint(event.pos):
                         self.reset()
@@ -70,18 +73,16 @@ class Game:
                         self.predictions = self.board.predict_all()
                     elif self.renderer.ai_move.collidepoint(event.pos):
                         picked_coordinates = self.board.ai_move()
-                        print(picked_coordinates)
                         if picked_coordinates:
                             self.ai_revealed.append(picked_coordinates)
                         self.reset_predictions()
                     elif self.renderer.quit_rect.collidepoint(event.pos):
-                        pygame.quit()
-                        sys.exit()
+                        self.quit()
                     else:
                         x, y = self.pixel_to_grid(event.pos)
                         if 0 <= x < config.BOARD_SIZE and 0 <= y < config.BOARD_SIZE:
                             if self.click_mode == config.CLICK_NORMAL:
-                                if event.button == config.REVEAL_BUTTON:
+                                if event.button == config.REVEAL_BUTTON and not self.board.ended() and not self.ai_solving:
                                     _, died = self.board.reveal(x, y)
                                     self.reset_predictions()
                                     if died: 
@@ -93,19 +94,22 @@ class Game:
                                 prediction = round_prediction(self.board.predict((x, y)))
                                 self.set_predictions(x, y, prediction)
                                 self.click_mode = config.CLICK_NORMAL
-            if self.ai_solving and not self.board.has_died and not self.board.has_won():
+            if self.ai_solving:
                 current_time = time.time()
                 if current_time - self.last_ai_move > config.DELAY_AI_SOLVE / 1000:
-                    picked_coordinates = self.board.ai_move()
-                    if picked_coordinates:
-                        self.ai_revealed.append(picked_coordinates)
-                    self.last_ai_move = current_time
+                    if not self.board.ended():
+                            picked_coordinates = self.board.ai_move()
+                            if picked_coordinates:
+                                self.ai_revealed.append(picked_coordinates)
+                            self.last_ai_move = current_time
+                    else:
+                        self.reset()
             self.screen.fill((0, 0, 0))
             self.renderer.draw_board(self.screen, self.board.hidden_board)
             self.renderer.draw_predictions(self.screen, self.filtered_predictions())
             self.renderer.draw_ai_revealed(self.screen, self.ai_revealed)
             self.renderer.draw_menu(self.screen, self.board.has_won(), self.board.has_died, self.board.bomb_count - self.board.get_flag_count())
-            self.renderer.draw_cursor(self.click_mode, self.screen, pygame.mouse.get_pos())
+            self.renderer.draw_cursor(self.click_mode, self.screen, pygame.mouse.get_pos(), self.ai_solving)
 
             pygame.display.flip()
             self.clock.tick(config.FPS)

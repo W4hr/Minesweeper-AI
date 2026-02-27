@@ -30,3 +30,6 @@ def probability_to_color(value):
     cmap = plt.get_cmap('RdYlGn_r')
     rgba = cmap(normColor(value))
     return (int(rgba[0] * 255), int(rgba[1] * 255), int(rgba[2] * 255))
+
+def linNorm(value, maxI, minI, maxO, minO):
+    return (value - minI)/(maxI - minI) * (maxO - minO) + minO
