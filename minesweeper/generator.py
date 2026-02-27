@@ -133,7 +133,7 @@ class MinesweeperBoard:
         return stringify_board(self.number_board)
     
 if __name__ == "__main__":
-    example = MinesweeperBoard(10)
+    example = MinesweeperBoard()
     print(stringify_board(example.get_binary_board(), 1))
     print(example)
     print(stringify_board(example.get_neighborhood(example.get_number_board(), 4, 7, 2)))

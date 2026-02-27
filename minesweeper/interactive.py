@@ -228,7 +228,7 @@ class MinesweeperAPI(MinesweeperBoard):
 
 
 if __name__ == "__main__":
-    board = MinesweeperAPI(11, 20, [[1, 2]])
+    board = MinesweeperAPI()
     print(
         stringify_board(
             board.get_out_of_bounds_neighborhood(board.number_board, 0, 0, 1)

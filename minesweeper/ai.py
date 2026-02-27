@@ -149,8 +149,8 @@ def getTraingsdata(
 if __name__ == "__main__":
     #print(getTraingsdata(11, 15, 2))
 
-    ai = MinesweeperAI(5, 50, 15)
+    ai = MinesweeperAI(config.DEFAULT_AI_RADIUS)
     ai.train()
-    board = MinesweeperAPI(2)
+    board = MinesweeperAPI()
     print(ai.X_test)
     print()
