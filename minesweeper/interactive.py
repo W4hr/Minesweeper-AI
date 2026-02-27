@@ -46,6 +46,7 @@ class MinesweeperAPI(MinesweeperBoard):
                     return self.hidden_board, True
             return self.hidden_board, False
         elif cell == self.BOMB:
+            self.last_revealed_count = self.get_revealed_count()
             self.hidden_board = [row[:] for row in self.number_board]
             self.moves += 1
             self.has_died = True
@@ -117,10 +118,13 @@ class MinesweeperAPI(MinesweeperBoard):
         return stringify_board(hidden_board)
 
     def reset(self):
-        stats.log(self.has_won(), self.has_died, self.moves, self.bomb_count, self.size)
+        if self.last_revealed_count is None:
+            self.last_revealed_count = -1
+        stats.log(self.has_won(), self.has_died, self.moves, self.bomb_count, self.size, self.last_revealed_count)
         self.moves = 0
         self.set_hidden_board()
         self.has_died = False
+        self.last_revealed_count = self.get_revealed_count()
 
     def safe_game(self, x, y):
         radius = self.radius

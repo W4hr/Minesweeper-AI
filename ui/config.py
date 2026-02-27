@@ -1,9 +1,10 @@
+from global_config import global_config
 import pygame
 
 class Config:
     # META
-    FPS = 60
-    BOARD_SIZE = 10
+    FPS = 480
+    BOARD_SIZE = global_config.BOARD_SIZE
     REVEAL_BUTTON = 1 # Left click
     FLAG_BUTTON = 3 # Right click
     CLICK_NORMAL = 'normal'
