@@ -21,6 +21,8 @@ class Game:
         self.reset_predictions()
         self.ai_revealed = []
         self.ai_solving = False
+        self.algo_revealed = []
+        self.dual_solving = False
         self.last_ai_move = 0
 
     def reset_predictions(self):
@@ -30,6 +32,7 @@ class Game:
         self.board.reset()
         self.reset_predictions()
         self.ai_revealed = []
+        self.algo_revealed = []
 
     def set_predictions(self, x, y, value):
         self.predictions[y][x] = value
@@ -48,6 +51,12 @@ class Game:
                 ]
                 for y in range(config.BOARD_SIZE)
             ]
+    
+    def disable_others(self):
+        self.ai_solving = False
+        self.dual_solving = False
+        self.click_mode = config.CLICK_NORMAL
+
     def quit(self):
         stats.save()
         pygame.quit()
@@ -62,12 +71,18 @@ class Game:
                     if self.renderer.reset_rect.collidepoint(event.pos):
                         self.reset()
                     elif self.renderer.ai_solve_rect.collidepoint(event.pos):
-                        self.ai_solving = not self.ai_solving
+                        if self.ai_solving:
+                            self.disable_others()
+                        else:
+                            self.disable_others()
+                            self.ai_solving = True
+                            self.click_mode = config.CLICK_FORBIDDEN
                     elif self.renderer.ai_pred_rect.collidepoint(event.pos):
                         if self.click_mode != config.CLICK_AI_PRED:
+                            self.disable_others()
                             print("AI-Predict-Mode activated")
                             self.click_mode = config.CLICK_AI_PRED
-                        elif self.click_mode == config.CLICK_AI_PRED:
+                        else:
                             self.click_mode = config.CLICK_NORMAL
                     elif self.renderer.auto_pred_rect.collidepoint(event.pos):
                         self.predictions = self.board.predict_all()
@@ -78,11 +93,20 @@ class Game:
                         self.reset_predictions()
                     elif self.renderer.algo_move_rect.collidepoint(event.pos):
                         if self.click_mode != config.CLICK_ALGO_PRED:
+                            self.disable_others()
                             self.click_mode = config.CLICK_ALGO_PRED
-                        elif self.click_mode == config.CLICK_ALGO_PRED:
+                        else:
                             self.click_mode = config.CLICK_NORMAL
                     elif self.renderer.algo_solve_rect.collidepoint(event.pos):
-                        self.board.auto_algo()
+                        self.board.auto_algo(self.algo_revealed)
+                        self.reset_predictions()
+                    elif self.renderer.dual_solve_rect.collidepoint(event.pos):
+                        if self.dual_solving:
+                            self.disable_others()
+                        else:
+                            self.disable_others()
+                            self.dual_solving = True
+                            self.click_mode = config.CLICK_FORBIDDEN
                     elif self.renderer.quit_rect.collidepoint(event.pos):
                         self.quit()
                     else:
@@ -97,29 +121,36 @@ class Game:
                                         self.renderer.draw_ai_revealed(self.screen, self.ai_revealed)
                                 elif event.button == config.FLAG_BUTTON:
                                     self.board.flag(x, y)
+                                    self.reset_predictions()
                             elif self.click_mode == config.CLICK_AI_PRED:
                                 prediction = round_prediction(self.board.predict((x, y)))
                                 self.set_predictions(x, y, prediction)
-                                self.click_mode = config.CLICK_NORMAL
                             elif self.click_mode == config.CLICK_ALGO_PRED:
-                                self.board.algo_move((x, y))
-                                self.click_mode = config.CLICK_NORMAL
-            if self.ai_solving:
+                                self.board.algo_move((x, y), self.algo_revealed)
+                                self.reset_predictions()
+            if self.ai_solving or self.dual_solving:
                 current_time = time.time()
                 if current_time - self.last_ai_move > config.DELAY_AI_SOLVE / 1000:
                     if not self.board.ended():
+                        if self.ai_solving:
                             picked_coordinates = self.board.ai_move()
                             if picked_coordinates:
                                 self.ai_revealed.append(picked_coordinates)
-                            self.last_ai_move = current_time
+                        if self.dual_solving:
+                            picked_coordinates = self.board.ai_move()
+                            if picked_coordinates:
+                                self.ai_revealed.append(picked_coordinates)
+                            self.board.auto_algo(self.algo_revealed)
+                        self.last_ai_move = current_time
+                        self.reset_predictions()
                     else:
                         self.reset()
             self.screen.fill((0, 0, 0))
             self.renderer.draw_board(self.screen, self.board.hidden_board)
             self.renderer.draw_predictions(self.screen, self.filtered_predictions())
-            self.renderer.draw_ai_revealed(self.screen, self.ai_revealed)
-            self.renderer.draw_menu(self.screen, self.board.has_won(), self.board.has_died, self.board.bomb_count - self.board.get_flag_count(), self.ai_solving, len(stats))
-            self.renderer.draw_cursor(self.click_mode, self.screen, pygame.mouse.get_pos(), self.ai_solving)
+            self.renderer.draw_revealed(self.screen, self.ai_revealed, self.algo_revealed)
+            self.renderer.draw_menu(self.screen, self.board.has_won(), self.board.has_died, self.board.bomb_count - self.board.get_flag_count(), self.ai_solving or self.dual_solving, len(stats))
+            self.renderer.draw_cursor(self.click_mode, self.screen, pygame.mouse.get_pos())
 
             pygame.display.flip()
             self.clock.tick(config.FPS)

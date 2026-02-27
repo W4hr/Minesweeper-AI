@@ -64,7 +64,7 @@ class Renderer:
         self.board_x = origin_x
         self.board_y = origin_y
     
-    def draw_menu(self, surface, has_won, has_died, bomb_count, ai_solving_on, games_completed):
+    def draw_menu(self, surface, has_won, has_died, bomb_count, show_log_length, games_completed):
         menu_width = self.board_x
         margin = config.MENU_MARGIN
         button_height = config.WIDTH/16
@@ -76,7 +76,7 @@ class Renderer:
         if has_died:
             status_text = "you died"
         self.status_rect = self.draw_button(margin, button_height * 0 + margin * 1, (button_width - margin)/2, button_height, status_text, surface, config.GAME_STATUS_BACKGROUND, 20)
-        if not ai_solving_on:
+        if not show_log_length:
             bomb_count_text = f"{bomb_count}"
         else:
             bomb_count_text = f"{games_completed}"
@@ -91,6 +91,9 @@ class Renderer:
 
         self.algo_move_rect = self.draw_button(margin, button_height * 4 + margin * 5, half_button_width, button_height, "ALGO MOVE", surface)
         self.algo_solve_rect = self.draw_button(margin * 2 + half_button_width, button_height * 4 + margin * 5, half_button_width, button_height, "ALGO SOLVE", surface)
+        
+        self.dual_solve_rect = self.draw_button(margin, button_height * 5 + margin * 6, button_width, button_height, "DUAL SOLVE", surface)
+
         self.quit_rect = self.draw_button(margin, config.HEIGHT - margin - button_height, button_width, button_height, "QUIT", surface)
 
 
@@ -103,7 +106,7 @@ class Renderer:
         surface.blit(txt_surface, txt_rect)
         return btn_rect
     
-    def draw_cursor(self, mode, surface, pos, ai_solving):
+    def draw_cursor(self, mode, surface, pos):
         if mode == config.CLICK_AI_PRED:
             pygame.mouse.set_visible(False)
             cursor_img_rect = config.WAND_IMG.get_rect()
@@ -116,7 +119,8 @@ class Renderer:
             cursor_img_rect.center = pos
             surface.blit(config.ROBOT_IMG, cursor_img_rect)
             self.algo_cursor_rect = cursor_img_rect
-        elif ai_solving:
+        elif mode == config.CLICK_FORBIDDEN:
+            pygame.mouse.set_visible(True)
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_NO)
         else:
             pygame.mouse.set_visible(True)
@@ -136,7 +140,10 @@ class Renderer:
         rect = pygame.Rect(left, top, config.CELL_WIDTH, config.CELL_WIDTH)
         pygame.draw.rect(surface, border_color, rect, border_width) # Border
 
-    def draw_ai_revealed(self, surface, ai_revealed: List[Tuple]):
+    def draw_revealed(self, surface, ai_revealed: List[Tuple], algo_revealed: List[Tuple]):
         for revealed in ai_revealed:
             x, y = revealed
             self.draw_border(surface, x, y, config.AI_SOLVED_BORDER_COLOR, config.BORDER_WIDTH * 3)
+        for revealed in algo_revealed:
+            x, y = revealed
+            self.draw_border(surface, x, y, config.ALGO_SOLVED_BORDER_COLOR, config.BORDER_WIDTH * 3)

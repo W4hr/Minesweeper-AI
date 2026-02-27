@@ -2,6 +2,7 @@ from minesweeper.generator import MinesweeperBoard
 from minesweeper.utils import stringify_board, round_prediction, linNorm
 from minesweeper.stats import stats
 from minesweeper.config import config
+from typing import List
 
 
 class MinesweeperAPI(MinesweeperBoard):
@@ -192,12 +193,13 @@ class MinesweeperAPI(MinesweeperBoard):
         largest_coordinates = None
         for y, row in enumerate(predictions):
             for x, cell in enumerate(row):
-                if cell < smallest and 0 < cell < config.PREDICTION_SCALE_MAX:
-                    smallest = cell
-                    smallest_coordinates = (x, y)
-                elif cell > largest and 0 < cell < config.PREDICTION_SCALE_MAX:
-                    largest = cell
-                    largest_coordinates = (x, y)
+                if 0 <= cell <= config.PREDICTION_SCALE_MAX:
+                    if cell < smallest:
+                        smallest = cell
+                        smallest_coordinates = (x, y)
+                    if cell > largest:
+                        largest = cell
+                        largest_coordinates = (x, y)
         if smallest_coordinates is None or largest_coordinates is None:
             return
         if flagging and config.PREDICTION_SCALE_MAX - largest < smallest:
@@ -233,7 +235,7 @@ class MinesweeperAPI(MinesweeperBoard):
     def is_revealed(self, value):
         return 0 <= value <= 8
     
-    def algo_move(self, coordinates):
+    def algo_move(self, coordinates, algo_revealed: List):
         x, y = coordinates
         cell = self.get_cell(x, y)
         if not self.is_revealed(cell):
@@ -244,13 +246,15 @@ class MinesweeperAPI(MinesweeperBoard):
         if hidden_count > 0 and hidden_count + flag_count == cell:
             for ny, nx in self.iter_neighborhood(x, y, 1):
                 if self.get_cell(nx, ny) == self.HIDDEN:
+                    algo_revealed.append((nx, ny))
                     self.flag(nx, ny)
         if flag_count == cell:
             for ny, nx in self.iter_neighborhood(x, y, 1):
                 if self.get_cell(nx, ny) == self.HIDDEN:
+                    algo_revealed.append((nx, ny))
                     self.reveal(nx, ny)
 
-    def auto_algo(self):
+    def auto_algo(self, algo_revealed):
         while True:
             revealed_before = self.get_revealed_count()
             flagged_before = self.get_flag_count()
@@ -260,7 +264,7 @@ class MinesweeperAPI(MinesweeperBoard):
                     if cell == self.HIDDEN:
                         continue
                     elif self.is_revealed(cell):
-                        self.algo_move((x, y))
+                        self.algo_move((x, y), algo_revealed)
             
             if revealed_before == self.get_revealed_count() and flagged_before == self.get_flag_count():
                 break

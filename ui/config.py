@@ -10,6 +10,7 @@ class Config:
     CLICK_NORMAL = 'normal'
     CLICK_AI_PRED = 'pred'
     CLICK_ALGO_PRED = 'algo'
+    CLICK_FORBIDDEN = 'forbidden'
 
     UNKNOWN_PROB = -1
 
@@ -48,6 +49,7 @@ class Config:
     BORDER_COLOR = (0, 0, 0)
     COLOR = (0, 0, 0)
     AI_SOLVED_BORDER_COLOR = (255, 255, 0)
+    ALGO_SOLVED_BORDER_COLOR = (0, 70, 255)
     GAME_STATUS_BACKGROUND = (0, 120, 0)
     BOMB_COUNT_BACKGROUND = (120, 0, 0)
 

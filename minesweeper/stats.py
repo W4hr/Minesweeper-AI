@@ -50,9 +50,28 @@ class Stats:
                 return len(df)
             except FileNotFoundError:
                 return 0
+            
+    def percentage_won(self):
+        if self.has_record():
+            won = [r["has_won"] for r in self.record]
+        else:
+            try:
+                df = pandas.read_csv(config.CSV_NAME)
+                won = df["has_won"]
+            except FileNotFoundError:
+                return 0
+        games_won = 0
+        games_lost = 0
+        for has_won in won:
+            if has_won:
+                games_won += 1
+            else:
+                games_lost += 1
+        return round(games_won / (games_won + games_lost) * 100, 2)
 
 stats = Stats()
 
 if __name__ == "__main__":
     print(f"Average Moves: {stats.get_average_moves()}")
     print(f"Games: {len(stats)}")
+    print(f"Games won (%): {stats.percentage_won()}%")
