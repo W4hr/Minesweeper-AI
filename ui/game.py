@@ -108,7 +108,7 @@ class Game:
             self.renderer.draw_board(self.screen, self.board.hidden_board)
             self.renderer.draw_predictions(self.screen, self.filtered_predictions())
             self.renderer.draw_ai_revealed(self.screen, self.ai_revealed)
-            self.renderer.draw_menu(self.screen, self.board.has_won(), self.board.has_died, self.board.bomb_count - self.board.get_flag_count())
+            self.renderer.draw_menu(self.screen, self.board.has_won(), self.board.has_died, self.board.bomb_count - self.board.get_flag_count(), self.ai_solving, len(stats))
             self.renderer.draw_cursor(self.click_mode, self.screen, pygame.mouse.get_pos(), self.ai_solving)
 
             pygame.display.flip()

@@ -64,7 +64,7 @@ class Renderer:
         self.board_x = origin_x
         self.board_y = origin_y
     
-    def draw_menu(self, surface, has_won, has_died, bomb_count):
+    def draw_menu(self, surface, has_won, has_died, bomb_count, ai_solving_on, games_completed):
         menu_width = self.board_x
         margin = config.MENU_MARGIN
         button_height = config.WIDTH/16
@@ -76,7 +76,11 @@ class Renderer:
         if has_died:
             status_text = "you died"
         self.status_rect = self.draw_button(margin, button_height * 0 + margin * 1, (button_width - margin)/2, button_height, status_text, surface, config.GAME_STATUS_BACKGROUND, 20)
-        self.bomb_count_rect = self.draw_button(margin*2 + (button_width - margin)/2, button_height * 0 + margin * 1, (button_width - margin)/2 , button_height, f"{bomb_count}", surface, config.BOMB_COUNT_BACKGROUND, 20)
+        if not ai_solving_on:
+            bomb_count_text = f"{bomb_count}"
+        else:
+            bomb_count_text = f"{games_completed}"
+        self.bomb_count_rect = self.draw_button(margin*2 + (button_width - margin)/2, button_height * 0 + margin * 1, (button_width - margin)/2 , button_height, bomb_count_text, surface, config.BOMB_COUNT_BACKGROUND, 20)
         self.reset_rect = self.draw_button(margin, button_height * 1 + margin * 2, button_width, button_height, "RESET", surface)
         self.ai_solve_rect = self.draw_button(margin, button_height * 2 + margin * 3, button_width, button_height, "AI SOLVE", surface)
         self.ai_pred_rect = self.draw_button(margin, button_height * 3 + margin * 4, button_width, button_height, "AI PREDICT", surface)

@@ -219,6 +219,7 @@ class MinesweeperAPI(MinesweeperBoard):
     def get_revealed_count(self, matrix=None):
         if matrix is None:
             matrix = self.hidden_board
+        count = 0
         for row in matrix:
             for cell in row:
                 if 0 <= cell <= 8:

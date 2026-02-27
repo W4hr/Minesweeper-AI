@@ -82,8 +82,14 @@ class MinesweeperAI:
         if self.include_revealed_count:
             additional_data.append(board.get_revealed_count(neighborhood))
 
-        flat_neighborhood = np.asarray(neighborhood).flatten().tolist()
-        test_vector = np.asarray(flat_neighborhood + additional_data).reshape(1, -1)
+        flat_neighborhood = np.asarray(neighborhood).flatten()
+        if config.ONE_HOT_ENCODING:
+            flat_neighborhood = (flat_neighborhood + 2).astype(int)  # map [-2..8] -> [0..10]
+            features = np.eye(11)[flat_neighborhood].flatten().tolist()
+        else:
+            features = flat_neighborhood.tolist()
+
+        test_vector = np.asarray(features + additional_data).reshape(1, -1)
         return self.model.predict_proba(test_vector)
 
 def getTraingsdata(
@@ -128,8 +134,14 @@ def getTraingsdata(
                 if include_revealed_count:
                     additional_data.append(board.get_revealed_count(neighborhood))
                 
-                flat_neighborhood = np.asarray(neighborhood).flatten().tolist()
-                data = (flat_neighborhood + additional_data, board.binary_vector[y * board_dimension + x])
+                flat_neighborhood = np.asarray(neighborhood).flatten()
+                if config.ONE_HOT_ENCODING:
+                    flat_neighborhood = (flat_neighborhood + 2).astype(int)  # map [-2..8] -> [0..10]
+                    features = np.eye(11)[flat_neighborhood].flatten().tolist()
+                else:
+                    features = flat_neighborhood.tolist()
+
+                data = (features + additional_data, board.binary_vector[y * board_dimension + x])
                 traindata.append(data)
     
     return traindata
