@@ -3,3 +3,4 @@ venv
 .VSCodeCounter
 .DS_Store
 ui/.DS_Store
+data.csv
