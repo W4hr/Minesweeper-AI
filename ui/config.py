@@ -9,6 +9,7 @@ class Config:
     FLAG_BUTTON = 3 # Right click
     CLICK_NORMAL = 'normal'
     CLICK_AI_PRED = 'pred'
+    CLICK_ALGO_PRED = 'algo'
 
     UNKNOWN_PROB = -1
 
@@ -26,6 +27,8 @@ class Config:
 
     MENU_MARGIN = 10
     BORDER_WIDTH = 1
+
+    BUTTON_FONT_SIZE = 20
 
     # STYLING
     COLOR_MAP = {
@@ -60,12 +63,14 @@ class Config:
         self.FLAG_IMG = pygame.transform.scale(self.FLAG_IMG, (int(self.CELL_WIDTH * 0.8), int(self.CELL_HEIGHT * 0.8)))
 
         self.WAND_IMG = pygame.image.load("ui/graphics/wand.png")
-        self.WAND_IMG = pygame.transform.scale(self.WAND_IMG, (int(self.CELL_WIDTH * 0.5), int(self.CELL_HEIGHT * 0.5)))
+        self.WAND_IMG = pygame.transform.scale(self.WAND_IMG, (int(self.CELL_WIDTH * 0.8), int(self.CELL_HEIGHT * 0.8)))
 
         self.ROBOT_IMG = pygame.image.load("ui/graphics/robot.png")
         self.ROBOT_IMG = pygame.transform.scale(self.ROBOT_IMG, (int(self.CELL_WIDTH * 0.5), int(self.CELL_HEIGHT * 0.5)))
 
         self.FONT = pygame.font.Font("ui/fonts/Minecraft.ttf", int(self.CELL_HEIGHT * 0.8))
         self.SMALL_FONT = pygame.font.Font("ui/fonts/Minecraft.ttf", int(self.CELL_HEIGHT * 0.3))
+
+        self.BUTTON_FONT = pygame.font.Font("ui/fonts/Minecraft.ttf", int(self.BUTTON_FONT_SIZE))
 
 config = Config()

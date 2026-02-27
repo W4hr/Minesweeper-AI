@@ -82,10 +82,15 @@ class Renderer:
             bomb_count_text = f"{games_completed}"
         self.bomb_count_rect = self.draw_button(margin*2 + (button_width - margin)/2, button_height * 0 + margin * 1, (button_width - margin)/2 , button_height, bomb_count_text, surface, config.BOMB_COUNT_BACKGROUND, 20)
         self.reset_rect = self.draw_button(margin, button_height * 1 + margin * 2, button_width, button_height, "RESET", surface)
-        self.ai_solve_rect = self.draw_button(margin, button_height * 2 + margin * 3, button_width, button_height, "AI SOLVE", surface)
-        self.ai_pred_rect = self.draw_button(margin, button_height * 3 + margin * 4, button_width, button_height, "AI PREDICT", surface)
-        self.auto_pred = self.draw_button(margin, button_height * 4 + margin * 5, button_width, button_height, "AUTO-PREDICT", surface)
-        self.ai_move = self.draw_button(margin, button_height * 5 + margin * 6, button_width, button_height, "AI MOVE", surface)
+        half_button_width = button_width / 2 - margin / 2
+        self.ai_pred_rect = self.draw_button(margin, button_height * 2 + margin * 3, half_button_width, button_height, "AI PREDICT", surface)
+        self.auto_pred_rect = self.draw_button(margin * 2 + half_button_width, button_height * 2 + margin * 3, half_button_width, button_height, "AUTO-PREDICT", surface)
+
+        self.ai_move_rect = self.draw_button(margin, button_height * 3 + margin * 4, half_button_width, button_height, "AI MOVE", surface)
+        self.ai_solve_rect = self.draw_button(margin * 2 + half_button_width, button_height * 3 + margin * 4, half_button_width, button_height, "AI SOLVE", surface)
+
+        self.algo_move_rect = self.draw_button(margin, button_height * 4 + margin * 5, half_button_width, button_height, "ALGO MOVE", surface)
+        self.algo_solve_rect = self.draw_button(margin * 2 + half_button_width, button_height * 4 + margin * 5, half_button_width, button_height, "ALGO SOLVE", surface)
         self.quit_rect = self.draw_button(margin, config.HEIGHT - margin - button_height, button_width, button_height, "QUIT", surface)
 
 
@@ -93,7 +98,7 @@ class Renderer:
         btn_rect = pygame.rect.Rect(left, top, width, height)
         pygame.draw.rect(surface, background_color, btn_rect, border_radius=border_radius)
         pygame.draw.rect(surface, config.BORDER_COLOR, btn_rect, config.BORDER_WIDTH, border_radius=border_radius)
-        txt_surface = config.FONT.render(text, True, config.COLOR)
+        txt_surface = config.BUTTON_FONT.render(text, True, config.COLOR)
         txt_rect = txt_surface.get_rect(center=btn_rect.center)
         surface.blit(txt_surface, txt_rect)
         return btn_rect
@@ -105,6 +110,12 @@ class Renderer:
             cursor_img_rect.center = pos
             surface.blit(config.WAND_IMG, cursor_img_rect)
             self.ai_cursor_rect = cursor_img_rect
+        elif mode == config.CLICK_ALGO_PRED:
+            pygame.mouse.set_visible(False)
+            cursor_img_rect = config.ROBOT_IMG.get_rect()
+            cursor_img_rect.center = pos
+            surface.blit(config.ROBOT_IMG, cursor_img_rect)
+            self.algo_cursor_rect = cursor_img_rect
         elif ai_solving:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_NO)
         else:

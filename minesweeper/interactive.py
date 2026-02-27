@@ -118,7 +118,7 @@ class MinesweeperAPI(MinesweeperBoard):
         return stringify_board(hidden_board)
 
     def reset(self):
-        if self.last_revealed_count is None:
+        if not hasattr(self, "last_revealed_count"):
             self.last_revealed_count = -1
         stats.log(self.has_won(), self.has_died, self.moves, self.bomb_count, self.size, self.last_revealed_count)
         self.moves = 0
@@ -229,7 +229,41 @@ class MinesweeperAPI(MinesweeperBoard):
                 if 0 <= cell <= 8:
                     count += 1
         return count
+    
+    def is_revealed(self, value):
+        return 0 <= value <= 8
+    
+    def algo_move(self, coordinates):
+        x, y = coordinates
+        cell = self.get_cell(x, y)
+        if not self.is_revealed(cell):
+            return
+        neighborhood = self.get_neighborhood(self.hidden_board, x, y, 1)
+        hidden_count = self.count_elements(neighborhood, self.HIDDEN)
+        flag_count = self.count_elements(neighborhood, self.FLAG)
+        if hidden_count > 0 and hidden_count + flag_count == cell:
+            for ny, nx in self.iter_neighborhood(x, y, 1):
+                if self.get_cell(nx, ny) == self.HIDDEN:
+                    self.flag(nx, ny)
+        if flag_count == cell:
+            for ny, nx in self.iter_neighborhood(x, y, 1):
+                if self.get_cell(nx, ny) == self.HIDDEN:
+                    self.reveal(nx, ny)
 
+    def auto_algo(self):
+        while True:
+            revealed_before = self.get_revealed_count()
+            flagged_before = self.get_flag_count()
+
+            for y, row in enumerate(self.hidden_board):
+                for x, cell in enumerate(row):
+                    if cell == self.HIDDEN:
+                        continue
+                    elif self.is_revealed(cell):
+                        self.algo_move((x, y))
+            
+            if revealed_before == self.get_revealed_count() and flagged_before == self.get_flag_count():
+                break
 
 if __name__ == "__main__":
     board = MinesweeperAPI()

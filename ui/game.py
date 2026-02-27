@@ -69,13 +69,20 @@ class Game:
                             self.click_mode = config.CLICK_AI_PRED
                         elif self.click_mode == config.CLICK_AI_PRED:
                             self.click_mode = config.CLICK_NORMAL
-                    elif self.renderer.auto_pred.collidepoint(event.pos):
+                    elif self.renderer.auto_pred_rect.collidepoint(event.pos):
                         self.predictions = self.board.predict_all()
-                    elif self.renderer.ai_move.collidepoint(event.pos):
+                    elif self.renderer.ai_move_rect.collidepoint(event.pos):
                         picked_coordinates = self.board.ai_move()
                         if picked_coordinates:
                             self.ai_revealed.append(picked_coordinates)
                         self.reset_predictions()
+                    elif self.renderer.algo_move_rect.collidepoint(event.pos):
+                        if self.click_mode != config.CLICK_ALGO_PRED:
+                            self.click_mode = config.CLICK_ALGO_PRED
+                        elif self.click_mode == config.CLICK_ALGO_PRED:
+                            self.click_mode = config.CLICK_NORMAL
+                    elif self.renderer.algo_solve_rect.collidepoint(event.pos):
+                        self.board.auto_algo()
                     elif self.renderer.quit_rect.collidepoint(event.pos):
                         self.quit()
                     else:
@@ -93,6 +100,9 @@ class Game:
                             elif self.click_mode == config.CLICK_AI_PRED:
                                 prediction = round_prediction(self.board.predict((x, y)))
                                 self.set_predictions(x, y, prediction)
+                                self.click_mode = config.CLICK_NORMAL
+                            elif self.click_mode == config.CLICK_ALGO_PRED:
+                                self.board.algo_move((x, y))
                                 self.click_mode = config.CLICK_NORMAL
             if self.ai_solving:
                 current_time = time.time()
