@@ -128,7 +128,7 @@ class Game:
                             elif self.click_mode == config.CLICK_ALGO_PRED:
                                 self.board.algo_move((x, y), self.algo_revealed)
                                 self.reset_predictions()
-            if self.ai_solving or self.dual_solving:
+            if (self.ai_solving or self.dual_solving) and (config.LIMIT_AUTOMATIC_SOLVE == -1 or len(stats.record) < config.LIMIT_AUTOMATIC_SOLVE):
                 current_time = time.time()
                 if current_time - self.last_ai_move > config.DELAY_AI_SOLVE / 1000:
                     if not self.board.ended():

@@ -2,6 +2,7 @@ import csv
 import numpy as np
 import pandas
 from minesweeper.config import config
+import os
 
 class Stats:
     def __init__(self):
@@ -41,10 +42,10 @@ class Stats:
             except FileNotFoundError:
                 return 0
         
-    def __len__(self):
+    def __len__(self, saved = True):
         if self.has_record():
             return len(self.record)
-        else:
+        elif saved:
             try:
                 df = pandas.read_csv(config.CSV_NAME)
                 return len(df)
@@ -68,6 +69,9 @@ class Stats:
             else:
                 games_lost += 1
         return round(games_won / (games_won + games_lost) * 100, 2)
+
+    def remove_csv(self):
+        os.remove(config.CSV_NAME)
 
 stats = Stats()
 
