@@ -67,7 +67,7 @@ class Renderer:
     def draw_menu(self, surface, has_won, has_died, bomb_count, show_log_length, games_completed):
         menu_width = self.board_x
         margin = config.MENU_MARGIN
-        button_height = config.WIDTH/16
+        button_height = config.WIDTH/20
         button_width = menu_width - 2 * margin
 
         status_text = "playing"
@@ -92,7 +92,11 @@ class Renderer:
         self.algo_move_rect = self.draw_button(margin, button_height * 4 + margin * 5, half_button_width, button_height, "ALGO MOVE", surface)
         self.algo_solve_rect = self.draw_button(margin * 2 + half_button_width, button_height * 4 + margin * 5, half_button_width, button_height, "ALGO SOLVE", surface)
         
-        self.dual_solve_rect = self.draw_button(margin, button_height * 5 + margin * 6, button_width, button_height, "DUAL SOLVE", surface)
+        self.random_move_rect = self.draw_button(margin, button_height * 5 + margin * 6, half_button_width, button_height, "RANDOM MOVE", surface)
+        self.random_solve_rect = self.draw_button(margin * 2 + half_button_width, button_height * 5 + margin * 6, half_button_width, button_height, "RANDOM SOLVE", surface)
+
+        self.dual_solve_rect = self.draw_button(margin, button_height * 6 + margin * 7, half_button_width, button_height, "HYBRID SOLVE", surface)
+        self.hybrid_random_solve_rect = self.draw_button(margin * 2 + half_button_width, button_height * 6 + margin * 7, half_button_width, button_height, "HYBRID RANDOM", surface)
 
         self.quit_rect = self.draw_button(margin, config.HEIGHT - margin - button_height, button_width, button_height, "QUIT", surface)
 

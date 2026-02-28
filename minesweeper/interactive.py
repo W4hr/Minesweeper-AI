@@ -3,6 +3,7 @@ from minesweeper.utils import stringify_board, round_prediction, linNorm
 from minesweeper.stats import stats
 from minesweeper.config import config
 from typing import List
+import random
 
 
 class MinesweeperAPI(MinesweeperBoard):
@@ -51,7 +52,6 @@ class MinesweeperAPI(MinesweeperBoard):
             self.hidden_board = [row[:] for row in self.number_board]
             self.moves += 1
             self.has_died = True
-            print("Died ☠")
             return self.number_board, True
         elif cell > 0:
             self.moves += 1
@@ -159,11 +159,8 @@ class MinesweeperAPI(MinesweeperBoard):
                 self.hidden_board, x, y, config.NIEGHBORHOOD_RELEVANT
             )
             unknown_count = self.count_elements(neighborhood, self.HIDDEN) + self.count_elements(neighborhood, self.OUT_OF_BOUNDS)
-            # Get max possible unknown cells in neighborhood
-            max_neighborhood_size = (config.NIEGHBORHOOD_RELEVANT * 2 + 1) ** 2
-            # Normalize unknown count to 0-1 range
-            norm_unknown_count = linNorm(unknown_count, max_neighborhood_size, 0, 1, 0)
-            # Soften the uncertainty effect to avoid collapsing toward 50%
+            max_neighborhood_size = (config.NIEGHBORHOOD_RELEVANT * 2 + 1) ** 2 # determine max possible neighborhood size for normalization
+            norm_unknown_count = linNorm(unknown_count, max_neighborhood_size, 0, 1, 0) # Normalize
             uncertainty_weight = config.PREDICTION_UNCERTAINTY_WEIGHT
             confidence = 1 - (norm_unknown_count * uncertainty_weight)
             # Pull uncertain predictions toward 50% (maximum uncertainty)
@@ -268,6 +265,20 @@ class MinesweeperAPI(MinesweeperBoard):
             
             if revealed_before == self.get_revealed_count() and flagged_before == self.get_flag_count():
                 break
+
+    def random_move(self):
+        hidden_cell_coordinates = []
+        for y, row in enumerate(self.hidden_board):
+            for x, cell in enumerate(row):
+                if cell == self.HIDDEN:
+                    hidden_cell_coordinates.append((x, y))
+        if len(hidden_cell_coordinates) == 0:
+            return
+        random.shuffle(hidden_cell_coordinates)
+        x, y = hidden_cell_coordinates[0]
+        self.reveal(x, y)
+        return
+
 
 if __name__ == "__main__":
     board = MinesweeperAPI()

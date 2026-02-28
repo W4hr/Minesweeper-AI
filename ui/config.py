@@ -3,7 +3,7 @@ import pygame
 
 class Config:
     # META
-    FPS = 480
+    FPS = 960
     BOARD_SIZE = global_config.BOARD_SIZE
     REVEAL_BUTTON = 1 # Left click
     FLAG_BUTTON = 3 # Right click
