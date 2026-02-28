@@ -7,6 +7,13 @@ from sklearn.metrics import mean_squared_error, root_mean_squared_error
 import numpy as np
 import time
 
+ENCODE_VALUES = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8]
+VAL_TO_IDX = {v: i for i, v in enumerate(ENCODE_VALUES)}
+
+def encode_neighborhood(flat_neighborhood: np.ndarray):
+    idx = np.array([VAL_TO_IDX[int(v)] for v in flat_neighborhood], dtype=int)
+    return np.eye(len(ENCODE_VALUES), dtype=int)[idx].flatten().tolist()
+
 class MinesweeperAI:
     def __init__(
         self,
@@ -84,8 +91,7 @@ class MinesweeperAI:
 
         flat_neighborhood = np.asarray(neighborhood).flatten()
         if config.ONE_HOT_ENCODING:
-            flat_neighborhood = (flat_neighborhood + 2).astype(int)  # map [-2..8] -> [0..10]
-            features = np.eye(11)[flat_neighborhood].flatten().tolist()
+            features = encode_neighborhood(flat_neighborhood)
         else:
             features = flat_neighborhood.tolist()
 
@@ -110,7 +116,9 @@ def getTraingsdata(
     board = MinesweeperAPI(board_dimension, new_bomb_percentage, safe_cells)
     for safe_cell in safe_cells:
         board.reveal(safe_cell[0], safe_cell[1])
-    
+    if config.TRAININGSDATA_ALGO_REVEAL:
+        if random.random() < config.PERCENTAGE_ALGO_REVEAL:
+            board.auto_algo([])
     traindata = []
     neighborhood_size = (radius * 2 + 1)**2
     
@@ -136,8 +144,7 @@ def getTraingsdata(
                 
                 flat_neighborhood = np.asarray(neighborhood).flatten()
                 if config.ONE_HOT_ENCODING:
-                    flat_neighborhood = (flat_neighborhood + 2).astype(int)  # map [-2..8] -> [0..10]
-                    features = np.eye(11)[flat_neighborhood].flatten().tolist()
+                    features = encode_neighborhood(flat_neighborhood)
                 else:
                     features = flat_neighborhood.tolist()
 

@@ -118,7 +118,7 @@ class Game:
                                     self.reset_predictions()
                                     if died: 
                                         print(stringify_board(self.board.hidden_board))
-                                        self.renderer.draw_ai_revealed(self.screen, self.ai_revealed)
+                                        self.renderer.draw_revealed(self.screen, self.ai_revealed, self.algo_revealed)
                                 elif event.button == config.FLAG_BUTTON:
                                     self.board.flag(x, y)
                                     self.reset_predictions()

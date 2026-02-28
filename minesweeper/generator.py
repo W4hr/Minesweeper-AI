@@ -11,9 +11,9 @@ class MinesweeperBoard:
     """
 
     HIDDEN = -1
-    BOMB = -2
+    OUT_OF_BOUNDS = -2
     FLAG = -3
-    OUT_OF_BOUNDS = -4
+    BOMB = -4
 
     def __init__(
         self,
@@ -23,7 +23,6 @@ class MinesweeperBoard:
     ):
         if revealed is None:
             revealed = []
-        # revealed = list(set(revealed))
         
         bomb_count = math.ceil((dimension**2) * (bomb_percentage/100))
         binary_vector = [1] * bomb_count + [0] * (dimension**2 - bomb_count - len(revealed))
