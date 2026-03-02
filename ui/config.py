@@ -19,6 +19,7 @@ class Config:
 
     DELAY_AI_SOLVE = 0 # in ms
     LIMIT_AUTOMATIC_SOLVE = 10_000 # -1 for unlimited
+    EXIT_ON_LIMIT = False
 
     # CONTENT
     # SIZING

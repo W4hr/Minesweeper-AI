@@ -6,9 +6,7 @@ from minesweeper.config import config
 
 
 class MinesweeperBoard:
-    """
-    Generates board with bombs on initialization
-    """
+    """Class to generate and manage the underlying Minesweeper board logic."""
 
     HIDDEN = -1
     OUT_OF_BOUNDS = -2
@@ -19,7 +17,7 @@ class MinesweeperBoard:
         self,
         dimension: int = config.DEFAULT_BOARD_DIMENSION,
         bomb_percentage: float = config.DEFAULT_BOMB_PERCENTAGE,
-        revealed=None,
+        revealed: list = None,
     ):
         if revealed is None:
             revealed = []
@@ -34,14 +32,14 @@ class MinesweeperBoard:
             if not (0 <= x < dimension and 0 <= y < dimension): raise IndexError
             binary_vector.insert(y * dimension + x, 0)
 
-        self.binary_vector = binary_vector
-        self.size = dimension
-        self.bomb_percentage = bomb_percentage
-        self.bomb_count = bomb_count
+        self.binary_vector: list[int] = binary_vector
+        self.size: int = dimension
+        self.bomb_percentage: float = bomb_percentage
+        self.bomb_count: int = bomb_count
         self._generate_number_vector()
-        self.number_board = self.get_number_board()
+        self.number_board: list[list[int]] = self.get_number_board()
 
-    def _generate_number_vector(self, area_around = 1):
+    def _generate_number_vector(self, area_around: int = 1) -> list[int]:
         """
         Converts binary matrix to a matrix showing the amount of bombs in the surrounding squares
         
@@ -61,7 +59,7 @@ class MinesweeperBoard:
         self.number_vector = number_vector
         return number_vector
 
-    def get_neighborhood(self, matrix, x, y, area_around = 1):
+    def get_neighborhood(self, matrix: list[list[int]], x: int, y: int, area_around: int = 1) -> list[list[int]]:
         """
         Returns neighborhood around `matrix(x,y)`
         
@@ -81,7 +79,7 @@ class MinesweeperBoard:
 
         return neighborhood
     
-    def get_out_of_bounds_neighborhood(self, matrix, x, y, area_around = 1) -> List[List]:
+    def get_out_of_bounds_neighborhood(self, matrix: list[list[int]], x: int, y: int, area_around: int = 1) -> list[list[int]]:
         x_start = x - area_around
         x_end = x + area_around
         y_start = y - area_around
@@ -97,7 +95,7 @@ class MinesweeperBoard:
             neighborhood.append(new_row)
         return neighborhood
 
-    def iter_neighborhood(self, x, y, area_around = 1):
+    def iter_neighborhood(self, x: int, y: int, area_around: int = 1):
         """
         returns iteratively the indexes of the neighborhood around `x` and `y`
         
@@ -117,18 +115,18 @@ class MinesweeperBoard:
 
 
     # User-Interface-Helper-Functions
-    def get_binary_board(self):
+    def get_binary_board(self) -> list[list[int]]:
         return self.to_board(self.binary_vector)
     
-    def get_number_board(self):
+    def get_number_board(self) -> list[list[int]]:
         if not hasattr(self, "number_vector"):
             self._generate_number_vector()
         return self.to_board(self.number_vector)
 
-    def to_board(self, vector: List[int]):
+    def to_board(self, vector: list[int]) -> list[list[int]]:
         return [vector[self.size * x: self.size * x + self.size] for x in range(self.size)]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return stringify_board(self.number_board)
     
 if __name__ == "__main__":

@@ -5,13 +5,14 @@ from typing import List, Tuple
 from minesweeper.utils import probability_to_color
 
 class Renderer:
+    """Handles rendering the Minesweeper board and UI elements using Pygame."""
     def __init__(self):
         self.board_x = 0
         self.board_y = 0
         self.reset_rect = pygame.Rect(0, 0, 0, 0)
         self.ai_solve_rect = pygame.Rect(0, 0, 0, 0)
 
-    def draw_cell(self, surface, left, top, content, font = config.FONT, cell_type = config.BOARD_CELL):
+    def draw_cell(self, surface: pygame.Surface, left: int, top: int, content: int | float, font: pygame.font.Font = config.FONT, cell_type: str = config.BOARD_CELL) -> None:
         rect = pygame.Rect(left, top, config.CELL_WIDTH, config.CELL_WIDTH)
 
         if cell_type == config.PREDICTION_CELL:
@@ -52,7 +53,7 @@ class Renderer:
             display_rect = display.get_rect(center=rect.center)
             surface.blit(display, display_rect)
 
-    def draw_board(self, surface, matrix):
+    def draw_board(self, surface: pygame.Surface, matrix: list[list[int]]) -> None:
         origin_x = (config.WIDTH - (config.CELL_WIDTH * config.BOARD_SIZE))
         origin_y = (config.HEIGHT - (config.CELL_HEIGHT * config.BOARD_SIZE)) // 2
         for y in range(config.BOARD_SIZE):
@@ -64,7 +65,7 @@ class Renderer:
         self.board_x = origin_x
         self.board_y = origin_y
     
-    def draw_menu(self, surface, has_won, has_died, bomb_count, show_log_length, games_completed):
+    def draw_menu(self, surface: pygame.Surface, has_won: bool, has_died: bool, bomb_count: int, show_log_length: bool, games_completed: int) -> None:
         menu_width = self.board_x
         margin = config.MENU_MARGIN
         button_height = config.WIDTH/20
@@ -101,7 +102,7 @@ class Renderer:
         self.quit_rect = self.draw_button(margin, config.HEIGHT - margin - button_height, button_width, button_height, "QUIT", surface)
 
 
-    def draw_button(self, left, top, width, height, text, surface, background_color = config.BACKGROUND, border_radius = -1):
+    def draw_button(self, left: int, top: int, width: int, height: int, text: str, surface: pygame.Surface, background_color: tuple[int, int, int] = config.BACKGROUND, border_radius: int = -1) -> pygame.Rect:
         btn_rect = pygame.rect.Rect(left, top, width, height)
         pygame.draw.rect(surface, background_color, btn_rect, border_radius=border_radius)
         pygame.draw.rect(surface, config.BORDER_COLOR, btn_rect, config.BORDER_WIDTH, border_radius=border_radius)
@@ -110,7 +111,7 @@ class Renderer:
         surface.blit(txt_surface, txt_rect)
         return btn_rect
     
-    def draw_cursor(self, mode, surface, pos):
+    def draw_cursor(self, mode: int, surface: pygame.Surface, pos: tuple[int, int]) -> None:
         if mode == config.CLICK_AI_PRED:
             pygame.mouse.set_visible(False)
             cursor_img_rect = config.WAND_IMG.get_rect()
@@ -130,7 +131,7 @@ class Renderer:
             pygame.mouse.set_visible(True)
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
     
-    def draw_predictions(self, surface, matrix):
+    def draw_predictions(self, surface: pygame.Surface, matrix: list[list[float]]) -> None:
         for y, row in enumerate(matrix):
             for x, cell in enumerate(row):
                 if cell != config.UNKNOWN_PROB:
@@ -138,13 +139,13 @@ class Renderer:
                     top = self.board_y + y * config.CELL_HEIGHT
                     self.draw_cell(surface, left, top, cell, config.SMALL_FONT, config.PREDICTION_CELL)
 
-    def draw_border(self, surface, x, y, border_color = config.BORDER_COLOR, border_width = config.BORDER_WIDTH):
+    def draw_border(self, surface: pygame.Surface, x: int, y: int, border_color: tuple[int, int, int] = config.BORDER_COLOR, border_width: int = config.BORDER_WIDTH) -> None:
         left = self.board_x + x * config.CELL_WIDTH
         top = self.board_y + y * config.CELL_HEIGHT
         rect = pygame.Rect(left, top, config.CELL_WIDTH, config.CELL_WIDTH)
         pygame.draw.rect(surface, border_color, rect, border_width) # Border
 
-    def draw_revealed(self, surface, ai_revealed: List[Tuple], algo_revealed: List[Tuple]):
+    def draw_revealed(self, surface: pygame.Surface, ai_revealed: list[tuple[int, int]], algo_revealed: list[tuple[int, int]]) -> None:
         for revealed in ai_revealed:
             x, y = revealed
             self.draw_border(surface, x, y, config.AI_SOLVED_BORDER_COLOR, config.BORDER_WIDTH * 3)

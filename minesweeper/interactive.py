@@ -7,32 +7,33 @@ import random
 
 
 class MinesweeperAPI(MinesweeperBoard):
+    """API for interacting with a Minesweeper board, including AI support."""
     def __init__(
         self,
-        dimension=config.DEFAULT_BOARD_DIMENSION,
-        bomb_percentage=config.DEFAULT_BOMB_PERCENTAGE,
-        revealed=[],
-        radius=config.DEFAULT_AI_RADIUS,
-        trainingsdata_amount=config.DEFAULT_TRAININGSDATA_AMOUNT,
-        include_bomb_count=config.DEFAULT_INCLUDE_BOMB_COUNT,
-        include_hidden_count=config.DEFAULT_INCLUDE_HIDDEN_COUNT,
+        dimension: int = config.DEFAULT_BOARD_DIMENSION,
+        bomb_percentage: float = config.DEFAULT_BOMB_PERCENTAGE,
+        revealed: list = [],
+        radius: int = config.DEFAULT_AI_RADIUS,
+        trainingsdata_amount: int = config.DEFAULT_TRAININGSDATA_AMOUNT,
+        include_bomb_count: bool = config.DEFAULT_INCLUDE_BOMB_COUNT,
+        include_hidden_count: bool = config.DEFAULT_INCLUDE_HIDDEN_COUNT,
     ):
         super().__init__(dimension, bomb_percentage, revealed)
         self.set_hidden_board()
-        self.moves = 0
-        self.radius = radius
-        self.trainingsdata_amount = trainingsdata_amount
+        self.moves: int = 0
+        self.radius: int = radius
+        self.trainingsdata_amount: int = trainingsdata_amount
         self.ai = None
-        self.has_died = False
-        self.include_bomb_count = include_bomb_count
-        self.include_hidden_count = include_hidden_count
+        self.has_died: bool = False
+        self.include_bomb_count: bool = include_bomb_count
+        self.include_hidden_count: bool = include_hidden_count
 
-    def set_hidden_board(self):
+    def set_hidden_board(self) -> list[list[int]]:
         hidden_board = [[self.HIDDEN] * self.size for _ in range(self.size)]
         self.hidden_board = hidden_board
         return self.hidden_board
 
-    def reveal(self, x, y, is_initial=True):
+    def reveal(self, x: int, y: int, is_initial: bool = True) -> tuple[list[list[int]], bool]:
         if self.moves == 0:
             self.safe_game(x, y)
         if not (0 <= x < self.size and 0 <= y < self.size):
@@ -48,11 +49,7 @@ class MinesweeperAPI(MinesweeperBoard):
                     return self.hidden_board, True
             return self.hidden_board, False
         elif cell == self.BOMB:
-            self.last_revealed_count = self.get_revealed_count()
-            self.hidden_board = [row[:] for row in self.number_board]
-            self.moves += 1
-            self.has_died = True
-            return self.number_board, True
+            return self.die()
         elif cell > 0:
             self.moves += 1
             self.hidden_board[y][x] = self.number_board[y][x]
@@ -62,7 +59,14 @@ class MinesweeperAPI(MinesweeperBoard):
             self.revealZero(x, y)
             return self.hidden_board, False
 
-    def revealZero(self, x, y):
+    def die(self) -> tuple[list[list[int]], bool]:
+        self.last_revealed_count = self.get_revealed_count()
+        self.hidden_board = [row[:] for row in self.number_board]
+        self.moves += 1
+        self.has_died = True
+        return self.number_board, True
+
+    def revealZero(self, x: int, y: int) -> None:
         if self.hidden_board[y][x] != self.HIDDEN:
             return
         cell = self.number_board[y][x]
@@ -73,26 +77,26 @@ class MinesweeperAPI(MinesweeperBoard):
                     continue
                 self.revealZero(nx, ny)
 
-    def convert(self, number: int):
+    def convert(self, number: int) -> str:
         if number == self.HIDDEN:
             return "□"
         if number == self.BOMB:
             return "*"
         return str(number)
 
-    def get_cell(self, x, y, board=None):
+    def get_cell(self, x: int, y: int, board: list[list[int]] = None) -> int:
         if board is None:
             board = self.hidden_board
         return board[y][x]
 
-    def flag(self, x, y):
+    def flag(self, x: int, y: int) -> None:
         cell = self.hidden_board[y][x]
         if cell == self.HIDDEN:
             self.hidden_board[y][x] = self.FLAG
         elif cell == self.FLAG:
             self.hidden_board[y][x] = self.HIDDEN
 
-    def get_hidden_cell_count(self):
+    def get_hidden_cell_count(self) -> int:
         summe = 0
         for row in self.hidden_board:
             for cell in row:
@@ -100,25 +104,25 @@ class MinesweeperAPI(MinesweeperBoard):
                     summe += 1
         return summe
 
-    def has_won(self, died=False):
+    def has_won(self, died: bool = False) -> bool:
         if died:
-            return
+            return False
         has_won = (
             self.get_hidden_cell_count() + self.get_flag_count() - self.bomb_count == 0
         )
         return has_won
 
-    def ended(self):
+    def ended(self) -> bool:
         has_ended = self.has_died or self.has_won()
         return has_ended
 
-    def __str__(self):
+    def __str__(self) -> str:
         hidden_board = [
             [self.convert(cell) for cell in row] for row in self.hidden_board
         ]
         return stringify_board(hidden_board)
 
-    def reset(self):
+    def reset(self) -> None:
         if not hasattr(self, "last_revealed_count"):
             self.last_revealed_count = -1
         stats.log(self.has_won(), self.has_died, self.moves, self.bomb_count, self.size, self.last_revealed_count)
@@ -127,7 +131,7 @@ class MinesweeperAPI(MinesweeperBoard):
         self.has_died = False
         self.last_revealed_count = self.get_revealed_count()
 
-    def safe_game(self, x, y):
+    def safe_game(self, x: int, y: int) -> None:
         radius = self.radius
         trainingsdata_amount = self.trainingsdata_amount
         ai = self.ai
@@ -136,7 +140,7 @@ class MinesweeperAPI(MinesweeperBoard):
         )
         self.ai = ai
 
-    def predict(self, coordinates):
+    def predict(self, coordinates: tuple[int, int]) -> float:
         if self.ai is None:
             from minesweeper.ai import MinesweeperAI
 
@@ -153,7 +157,7 @@ class MinesweeperAPI(MinesweeperBoard):
         else: 
             return prediction
         
-    def weigh_prediction_unknowns(self, coordinates, prediction):
+    def weigh_prediction_unknowns(self, coordinates: tuple[int, int], prediction: float) -> float:
             x, y = coordinates
             neighborhood = self.get_out_of_bounds_neighborhood(
                 self.hidden_board, x, y, config.NIEGHBORHOOD_RELEVANT
@@ -169,7 +173,7 @@ class MinesweeperAPI(MinesweeperBoard):
                 + config.PREDICTION_UNCERTAINTY_CENTER * (1 - confidence)
             )
 
-    def predict_all(self):
+    def predict_all(self) -> list[list[float]]:
         predictions = []
         for y, row in enumerate(self.hidden_board):
             current_row = []
@@ -182,7 +186,7 @@ class MinesweeperAPI(MinesweeperBoard):
             predictions.append(current_row)
         return predictions
 
-    def ai_move(self, flagging=False):
+    def ai_move(self, flagging: bool = False) -> tuple[int, int] | None:
         predictions = self.predict_all()
         smallest = config.PREDICTION_SCALE_MAX
         smallest_coordinates = None
@@ -198,15 +202,18 @@ class MinesweeperAPI(MinesweeperBoard):
                         largest = cell
                         largest_coordinates = (x, y)
         if smallest_coordinates is None or largest_coordinates is None:
-            return
+            return None
         if flagging and config.PREDICTION_SCALE_MAX - largest < smallest:
-            self.flag(largest_coordinates[0], largest_coordinates[1])
+            if config.VERIFY_FLAG_PLACEMENT and self.get_cell(largest_coordinates[0], largest_coordinates[1], self.number_board) != self.BOMB:
+                self.die()
+            else:
+                self.flag(largest_coordinates[0], largest_coordinates[1])
             return largest_coordinates
         else:
             self.reveal(smallest_coordinates[0], smallest_coordinates[1])
             return smallest_coordinates
 
-    def count_elements(self, matrix, element):
+    def count_elements(self, matrix: list[list[int]], element: int | str) -> int:
         count = 0
         for row in matrix:
             for cell in row:
@@ -214,12 +221,12 @@ class MinesweeperAPI(MinesweeperBoard):
                     count += 1
         return count
 
-    def get_flag_count(self, matrix=None):
+    def get_flag_count(self, matrix: list[list[int]] = None) -> int:
         if matrix is None:
             matrix = self.hidden_board
         return self.count_elements(matrix, self.FLAG)
 
-    def get_revealed_count(self, matrix=None):
+    def get_revealed_count(self, matrix: list[list[int]] = None) -> int:
         if matrix is None:
             matrix = self.hidden_board
         count = 0
@@ -229,10 +236,10 @@ class MinesweeperAPI(MinesweeperBoard):
                     count += 1
         return count
     
-    def is_revealed(self, value):
+    def is_revealed(self, value: int) -> bool:
         return 0 <= value <= 8
     
-    def algo_move(self, coordinates, algo_revealed: List):
+    def algo_move(self, coordinates: tuple[int, int], algo_revealed: list) -> None:
         x, y = coordinates
         cell = self.get_cell(x, y)
         if not self.is_revealed(cell):
@@ -251,7 +258,7 @@ class MinesweeperAPI(MinesweeperBoard):
                     algo_revealed.append((nx, ny))
                     self.reveal(nx, ny)
 
-    def auto_algo(self, algo_revealed):
+    def auto_algo(self, algo_revealed: list) -> None:
         while True:
             revealed_before = self.get_revealed_count()
             flagged_before = self.get_flag_count()
@@ -266,18 +273,18 @@ class MinesweeperAPI(MinesweeperBoard):
             if revealed_before == self.get_revealed_count() and flagged_before == self.get_flag_count():
                 break
 
-    def random_move(self):
+    def random_move(self) -> tuple[int, int] | None:
         hidden_cell_coordinates = []
         for y, row in enumerate(self.hidden_board):
             for x, cell in enumerate(row):
                 if cell == self.HIDDEN:
                     hidden_cell_coordinates.append((x, y))
         if len(hidden_cell_coordinates) == 0:
-            return
+            return None
         random.shuffle(hidden_cell_coordinates)
         x, y = hidden_cell_coordinates[0]
         self.reveal(x, y)
-        return
+        return (x, y)
 
 
 if __name__ == "__main__":

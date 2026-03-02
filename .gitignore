@@ -3,4 +3,9 @@ venv
 .VSCodeCounter
 .DS_Store
 ui/.DS_Store
-data.csv
+data_session.csv
+/stats_archive/*
+PERFORMANCE_TEST_README.md
+performance_test.py
+quick_test.py
+quick_test_results.csv

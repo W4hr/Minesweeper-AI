@@ -10,6 +10,7 @@ from minesweeper.stats import stats
 from minesweeper.utils import stringify_board
 
 class Game:
+    """Core logic for the Pygame-based Minesweeper graphical interface."""
     def __init__(self):
         pygame.init()
         self.screen = pygame.display.set_mode((config.WIDTH, config.HEIGHT))
@@ -22,30 +23,30 @@ class Game:
         self.ai_revealed = []
         self.ai_solving = False
         self.algo_revealed = []
-        self.dual_solving = False
+        self.hybrid_solving = False
         self.random_solving = False
         self.hybrid_random_solving = False
         self.last_ai_move = 0
 
-    def reset_predictions(self):
+    def reset_predictions(self) -> None:
         self.predictions = [[config.UNKNOWN_PROB for _ in range(config.BOARD_SIZE)] for _ in range(config.BOARD_SIZE)]
     
-    def reset(self):
+    def reset(self) -> None:
         self.board.reset()
         self.reset_predictions()
         self.ai_revealed = []
         self.algo_revealed = []
 
-    def set_predictions(self, x, y, value):
+    def set_predictions(self, x: int, y: int, value: float) -> None:
         self.predictions[y][x] = value
 
-    def pixel_to_grid(self, mouse_pos):
+    def pixel_to_grid(self, mouse_pos: tuple[int, int]) -> tuple[int, int]:
         mx, my = mouse_pos
         bx = self.renderer.board_x
         by = self.renderer.board_y
         return int((mx - bx) // config.CELL_WIDTH), int((my - by) // config.CELL_HEIGHT)
 
-    def filtered_predictions(self):
+    def filtered_predictions(self) -> list[list[float]]:
         return [
                 [
                     self.predictions[y][x] if self.board.hidden_board[y][x] == -1 else config.UNKNOWN_PROB
@@ -54,19 +55,19 @@ class Game:
                 for y in range(config.BOARD_SIZE)
             ]
     
-    def disable_others(self):
+    def disable_others(self) -> None:
         self.ai_solving = False
-        self.dual_solving = False
+        self.hybrid_solving = False
         self.random_solving = False
         self.hybrid_random_solving = False
         self.click_mode = config.CLICK_NORMAL
 
-    def quit(self):
+    def quit(self) -> None:
         stats.save()
         pygame.quit()
         sys.exit()
     
-    def run(self):
+    def run(self) -> None:
         while True:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -105,11 +106,11 @@ class Game:
                         self.board.auto_algo(self.algo_revealed)
                         self.reset_predictions()
                     elif self.renderer.dual_solve_rect.collidepoint(event.pos):
-                        if self.dual_solving:
+                        if self.hybrid_solving:
                             self.disable_others()
                         else:
                             self.disable_others()
-                            self.dual_solving = True
+                            self.hybrid_solving = True
                             self.click_mode = config.CLICK_FORBIDDEN
                     elif self.renderer.random_move_rect.collidepoint(event.pos):
                         self.board.random_move()
@@ -148,7 +149,7 @@ class Game:
                             elif self.click_mode == config.CLICK_ALGO_PRED:
                                 self.board.algo_move((x, y), self.algo_revealed)
                                 self.reset_predictions()
-            if (self.ai_solving or self.dual_solving or self.random_solving or self.hybrid_random_solving) and (config.LIMIT_AUTOMATIC_SOLVE == -1 or len(stats.record) < config.LIMIT_AUTOMATIC_SOLVE):
+            if (self.ai_solving or self.hybrid_solving or self.random_solving or self.hybrid_random_solving) and (config.LIMIT_AUTOMATIC_SOLVE == -1 or len(stats.record) < config.LIMIT_AUTOMATIC_SOLVE):
                 current_time = time.time()
                 if current_time - self.last_ai_move > config.DELAY_AI_SOLVE / 1000:
                     if not self.board.ended():
@@ -156,7 +157,7 @@ class Game:
                             picked_coordinates = self.board.ai_move()
                             if picked_coordinates:
                                 self.ai_revealed.append(picked_coordinates)
-                        if self.dual_solving:
+                        if self.hybrid_solving:
                             picked_coordinates = self.board.ai_move()
                             if picked_coordinates:
                                 self.ai_revealed.append(picked_coordinates)
@@ -174,11 +175,13 @@ class Game:
                         self.reset_predictions()
                     else:
                         self.reset()
+            elif len(stats.record) >= config.LIMIT_AUTOMATIC_SOLVE and config.EXIT_ON_LIMIT:
+                self.quit()
             self.screen.fill((0, 0, 0))
             self.renderer.draw_board(self.screen, self.board.hidden_board)
             self.renderer.draw_predictions(self.screen, self.filtered_predictions())
             self.renderer.draw_revealed(self.screen, self.ai_revealed, self.algo_revealed)
-            self.renderer.draw_menu(self.screen, self.board.has_won(), self.board.has_died, self.board.bomb_count - self.board.get_flag_count(), self.ai_solving or self.dual_solving or self.random_solving or self.hybrid_random_solving, len(stats))
+            self.renderer.draw_menu(self.screen, self.board.has_won(), self.board.has_died, self.board.bomb_count - self.board.get_flag_count(), self.ai_solving or self.hybrid_solving or self.random_solving or self.hybrid_random_solving, len(stats))
             self.renderer.draw_cursor(self.click_mode, self.screen, pygame.mouse.get_pos())
 
             pygame.display.flip()

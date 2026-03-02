@@ -10,19 +10,20 @@ import time
 ENCODE_VALUES = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8]
 VAL_TO_IDX = {v: i for i, v in enumerate(ENCODE_VALUES)}
 
-def encode_neighborhood(flat_neighborhood: np.ndarray):
+def encode_neighborhood(flat_neighborhood: np.ndarray) -> list[int]:
     idx = np.array([VAL_TO_IDX[int(v)] for v in flat_neighborhood], dtype=int)
     return np.eye(len(ENCODE_VALUES), dtype=int)[idx].flatten().tolist()
 
 class MinesweeperAI:
+    """AI for solving Minesweeper games using logistic regression."""
     def __init__(
         self,
-        radius_neighborhood,
-        trainingsdata_amount=config.DEFAULT_AI_TRAININGSDATA_AMOUNT,
-        bomb_percentage=config.DEFAULT_BOMB_PERCENTAGE,
-        include_bomb_count=config.DEFAULT_INCLUDE_BOMB_COUNT,
-        include_hidden_count=config.DEFAULT_INCLUDE_HIDDEN_COUNT,
-        include_revealed_count=config.DEFAULT_INCLUDE_REVEALED_COUNT,
+        radius_neighborhood: int,
+        trainingsdata_amount: int = config.DEFAULT_AI_TRAININGSDATA_AMOUNT,
+        bomb_percentage: int = config.DEFAULT_BOMB_PERCENTAGE,
+        include_bomb_count: bool = config.DEFAULT_INCLUDE_BOMB_COUNT,
+        include_hidden_count: bool = config.DEFAULT_INCLUDE_HIDDEN_COUNT,
+        include_revealed_count: bool = config.DEFAULT_INCLUDE_REVEALED_COUNT,
     ):
         board_dimension = radius_neighborhood * 2 + config.BOARD_DIMENSION_PADDING
         X = [] # Input
@@ -39,6 +40,7 @@ class MinesweeperAI:
                     break
         end_data_gen = time.time()
         print(f"Successfully generated trainingsdata in {end_data_gen - start_data_gen}")
+        self.data_generation_seconds: float = end_data_gen - start_data_gen
         X_train, X_test, y_train, y_test = train_test_split(
             X,
             Y,
@@ -46,18 +48,19 @@ class MinesweeperAI:
             random_state=config.TRAIN_TEST_SPLIT_RANDOM_STATE,
             shuffle=config.TRAIN_TEST_SPLIT_SHUFFLE,
         )
-        self.X_train = X_train
-        self.X_test = X_test
-        self.y_train = y_train
-        self.y_test = y_test
-        self.radius = radius_neighborhood
-        self.model = None
+        self.X_train: list = X_train
+        self.X_test: list = X_test
+        self.y_train: list = y_train
+        self.y_test: list = y_test
+        self.radius: int = radius_neighborhood
+        self.model: LogisticRegression | None = None
 
-        self.include_bomb_count = include_bomb_count
-        self.include_hidden_count = include_hidden_count
-        self.include_revealed_count = include_revealed_count
+        self.include_bomb_count: bool = include_bomb_count
+        self.include_hidden_count: bool = include_hidden_count
+        self.include_revealed_count: bool = include_revealed_count
+        self.bomb_percentage: float = bomb_percentage
         
-    def train(self):
+    def train(self) -> None:
         model = LogisticRegression(
             random_state=config.LOGREG_RANDOM_STATE,
             class_weight=config.LOGREG_CLASS_WEIGHT,
@@ -68,6 +71,7 @@ class MinesweeperAI:
         model.fit(self.X_train, self.y_train)
         end_train = time.time()
         print(f"Model trained in {end_train - start_train}")
+        self.model_training_seconds = end_train - start_train
         y_pred = model.predict(self.X_test)
         y_pred_proba = model.predict_proba(self.X_test)[:, 1]
         self.mse = mean_squared_error(self.y_test, y_pred)
@@ -75,8 +79,19 @@ class MinesweeperAI:
         self.weights = model.coef_
         self.bias = model.intercept_
         self.model = model
+        from minesweeper.stats import stats
+        stats.log_training(
+            self.data_generation_seconds,
+            self.model_training_seconds,
+            len(self.X_train) + len(self.X_test),
+            self.radius,
+            self.bomb_percentage,
+            self.include_bomb_count,
+            self.include_hidden_count,
+            self.include_revealed_count
+        )
     
-    def predict(self, board: MinesweeperAPI, coordinates):
+    def predict(self, board: MinesweeperAPI, coordinates: tuple[int, int]) -> np.ndarray:
         if self.model is None:
             self.train()
         x, y = coordinates
@@ -99,13 +114,13 @@ class MinesweeperAI:
         return self.model.predict_proba(test_vector)
 
 def getTraingsdata(
-    board_dimension,
-    bomb_percentage,
-    radius,
-    include_bomb_count,
-    include_hidden_count,
-    include_revealed_count,
-):
+    board_dimension: int,
+    bomb_percentage: float,
+    radius: int,
+    include_bomb_count: bool,
+    include_hidden_count: bool,
+    include_revealed_count: bool,
+) -> list[tuple[list[float], int]]:
     safe_cells = [
         [random.randint(0, board_dimension - 1), random.randint(0, board_dimension - 1)]
         for _ in range(config.TRAINING_SAFE_CELLS)
