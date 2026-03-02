@@ -9,3 +9,8 @@ PERFORMANCE_TEST_README.md
 performance_test.py
 quick_test.py
 quick_test_results.csv
+ui/graphics/numbers/
+generate_numbers.py
+performance_results.csv
+generate_graphs.py
+.gitignore

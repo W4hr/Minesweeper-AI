@@ -14,7 +14,7 @@ class MinesweeperAPI(MinesweeperBoard):
         bomb_percentage: float = config.DEFAULT_BOMB_PERCENTAGE,
         revealed: list = [],
         radius: int = config.DEFAULT_AI_RADIUS,
-        trainingsdata_amount: int = config.DEFAULT_TRAININGSDATA_AMOUNT,
+        trainingsdata_amount: int = config.DEFAULT_AI_TRAININGSDATA_AMOUNT,
         include_bomb_count: bool = config.DEFAULT_INCLUDE_BOMB_COUNT,
         include_hidden_count: bool = config.DEFAULT_INCLUDE_HIDDEN_COUNT,
     ):
