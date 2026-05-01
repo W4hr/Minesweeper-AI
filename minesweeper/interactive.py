@@ -2,6 +2,7 @@ from minesweeper.generator import MinesweeperBoard
 from minesweeper.utils import stringify_board, round_prediction, linNorm
 from minesweeper.stats import stats
 from minesweeper.config import config
+from global_config import AIAlgorithms
 from typing import List
 import random
 
@@ -141,16 +142,7 @@ class MinesweeperAPI(MinesweeperBoard):
         self.ai = ai
 
     def predict(self, coordinates: tuple[int, int]) -> float:
-        if self.ai is None:
-            from minesweeper.ai import MinesweeperAI
-
-            self.ai = MinesweeperAI(
-                self.radius,
-                self.trainingsdata_amount,
-                self.bomb_percentage,
-                self.include_bomb_count,
-                self.include_hidden_count,
-            )
+        self.init_ai()
         prediction = self.ai.predict(self, coordinates)[:, 1][0]
         if config.CONSIDER_UNKNOWNS:
             return self.weigh_prediction_unknowns(coordinates, prediction)
@@ -174,16 +166,27 @@ class MinesweeperAPI(MinesweeperBoard):
             )
 
     def predict_all(self) -> list[list[float]]:
-        predictions = []
+        self.init_ai()
+        
+        predictions = [[-1 for _ in range(self.size)] for _ in range(self.size)]
+        hidden_cords = []
+
         for y, row in enumerate(self.hidden_board):
-            current_row = []
             for x, cell in enumerate(row):
                 if cell == self.HIDDEN:
-                    prediction = self.predict((x, y))
-                    current_row.append(round_prediction(prediction))
-                else:
-                    current_row.append(-1)
-            predictions.append(current_row)
+                    hidden_cords.append((x, y))
+
+        if len(hidden_cords) == 0:
+            return predictions
+
+        probabilities = self.ai.predict_many(self, hidden_cords)
+        for (x, y), probability in zip(hidden_cords, probabilities):
+            if config.CONSIDER_UNKNOWNS:
+                p = self.weigh_prediction_unknowns((x, y), probability)
+            else:
+                p = probability
+            predictions[y][x] = round_prediction(p)
+
         return predictions
 
     def ai_move(self, flagging: bool = False) -> tuple[int, int] | None:
@@ -285,6 +288,22 @@ class MinesweeperAPI(MinesweeperBoard):
         x, y = hidden_cell_coordinates[0]
         self.reveal(x, y)
         return (x, y)
+    
+    def init_ai(self):
+        if self.ai is None:
+            from minesweeper.ai import MinesweeperAI
+
+            self.ai = MinesweeperAI(
+                self.radius,
+                self.trainingsdata_amount,
+                self.bomb_percentage,
+                self.include_bomb_count,
+                self.include_hidden_count,
+            )
+    
+    def train(self, method: AIAlgorithms = ""):
+        self.init_ai()
+        self.ai.train(method)
 
 
 if __name__ == "__main__":

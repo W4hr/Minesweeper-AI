@@ -7,6 +7,7 @@ import os
 import json
 from datetime import datetime
 from glob import glob
+from enum import Enum
 
 class Stats:
     """Class to log and manage game and AI training statistics."""
@@ -64,8 +65,13 @@ class Stats:
             if key.isupper():
                 value = getattr(config, key)
                 if not callable(value):
-                    config_data[key] = value
+                    config_data[key] = self._serialize_config_value(value)
         return json.dumps(config_data, sort_keys=True)
+
+    def _serialize_config_value(self, value):
+        if isinstance(value, Enum):
+            return value.value
+        return value
 
     def _append_session_row(self, row):
         file_exists = os.path.exists(self.session_csv_name)

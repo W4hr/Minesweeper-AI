@@ -84,25 +84,36 @@ class Renderer:
         self.bomb_count_rect = self.draw_button(margin*2 + (button_width - margin)/2, button_height * 0 + margin * 1, (button_width - margin)/2 , button_height, bomb_count_text, surface, config.BOMB_COUNT_BACKGROUND, 20)
         self.reset_rect = self.draw_button(margin, button_height * 1 + margin * 2, button_width, button_height, "RESET", surface)
         half_button_width = button_width / 2 - margin / 2
-        self.ai_pred_rect = self.draw_button(margin, button_height * 2 + margin * 3, half_button_width, button_height, "AI PREDICT", surface)
-        self.auto_pred_rect = self.draw_button(margin * 2 + half_button_width, button_height * 2 + margin * 3, half_button_width, button_height, "AUTO-PREDICT", surface)
 
-        self.ai_move_rect = self.draw_button(margin, button_height * 3 + margin * 4, half_button_width, button_height, "AI MOVE", surface)
-        self.ai_solve_rect = self.draw_button(margin * 2 + half_button_width, button_height * 3 + margin * 4, half_button_width, button_height, "AI SOLVE", surface)
-
-        self.algo_move_rect = self.draw_button(margin, button_height * 4 + margin * 5, half_button_width, button_height, "ALGO MOVE", surface)
-        self.algo_solve_rect = self.draw_button(margin * 2 + half_button_width, button_height * 4 + margin * 5, half_button_width, button_height, "ALGO SOLVE", surface)
+        def button_row(desired_row: int) -> int | float:
+            return button_height * desired_row + margin * (desired_row + 1)
         
-        self.random_move_rect = self.draw_button(margin, button_height * 5 + margin * 6, half_button_width, button_height, "RANDOM MOVE", surface)
-        self.random_solve_rect = self.draw_button(margin * 2 + half_button_width, button_height * 5 + margin * 6, half_button_width, button_height, "RANDOM SOLVE", surface)
+        def button_column(desired_column: int) -> int | float:
+            return margin * desired_column + half_button_width * (desired_column - 1)
 
-        self.dual_solve_rect = self.draw_button(margin, button_height * 6 + margin * 7, half_button_width, button_height, "HYBRID SOLVE", surface)
-        self.hybrid_random_solve_rect = self.draw_button(margin * 2 + half_button_width, button_height * 6 + margin * 7, half_button_width, button_height, "HYBRID RANDOM", surface)
+        self.train_logistic_rect = self.draw_button(button_column(1), button_row(2), half_button_width, button_height, "TRAIN LOGISTIC", surface)
+        self.train_random_forest = self.draw_button(button_column(2), button_row(2), half_button_width, button_height, "RAND FOREST", surface)
+
+        self.ai_pred_rect = self.draw_button(button_column(1), button_row(3), half_button_width, button_height, "AI PREDICT", surface)
+        self.auto_pred_rect = self.draw_button(button_column(2), button_row(3), half_button_width, button_height, "AUTO-PREDICT", surface)
+
+        self.ai_move_rect = self.draw_button(button_column(1), button_row(4), half_button_width, button_height, "AI MOVE", surface)
+        self.ai_solve_rect = self.draw_button(button_column(2), button_row(4), half_button_width, button_height, "AI SOLVE", surface)
+
+        self.algo_move_rect = self.draw_button(button_column(1), button_row(5), half_button_width, button_height, "ALGO MOVE", surface)
+        self.algo_solve_rect = self.draw_button(button_column(2), button_row(5), half_button_width, button_height, "ALGO SOLVE", surface)
+        
+        self.random_move_rect = self.draw_button(button_column(1), button_row(6), half_button_width, button_height, "RANDOM MOVE", surface)
+        self.random_solve_rect = self.draw_button(button_column(2), button_row(6), half_button_width, button_height, "RANDOM SOLVE", surface)
+
+        self.dual_solve_rect = self.draw_button(button_column(1), button_row(7), half_button_width, button_height, "HYBRID SOLVE", surface)
+        self.hybrid_random_solve_rect = self.draw_button(button_column(2), button_row(7), half_button_width, button_height, "HYBRID RANDOM", surface)
 
         self.quit_rect = self.draw_button(margin, config.HEIGHT - margin - button_height, button_width, button_height, "QUIT", surface)
 
 
     def draw_button(self, left: int, top: int, width: int, height: int, text: str, surface: pygame.Surface, background_color: tuple[int, int, int] = config.BACKGROUND, border_radius: int = -1) -> pygame.Rect:
+        """Draws a button"""
         btn_rect = pygame.rect.Rect(left, top, width, height)
         pygame.draw.rect(surface, background_color, btn_rect, border_radius=border_radius)
         pygame.draw.rect(surface, config.BORDER_COLOR, btn_rect, config.BORDER_WIDTH, border_radius=border_radius)

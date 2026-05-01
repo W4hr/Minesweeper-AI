@@ -1,4 +1,4 @@
-from global_config import global_config
+from global_config import global_config, AIAlgorithms
 
 class Config:
     # DEFAULTS
@@ -9,21 +9,31 @@ class Config:
     DEFAULT_INCLUDE_BOMB_COUNT = True
     DEFAULT_INCLUDE_HIDDEN_COUNT = True
     DEFAULT_INCLUDE_REVEALED_COUNT = True
+    RANDOM_STATE = 42
+    
+    FALLBACK_METHOD = AIAlgorithms.RANDOM_FOREST
 
-    # AI TRAININ
+    # AI TRAINING
     ONE_HOT_ENCODING = True
     TRAIN_TEST_SPLIT_TEST_SIZE = 0.1
     TRAIN_TEST_SPLIT_RANDOM_STATE = 42
     TRAIN_TEST_SPLIT_SHUFFLE = True
-    LOGREG_RANDOM_STATE = 42
     LOGREG_CLASS_WEIGHT = "balanced"
     LOGREG_MAX_ITER = 2000
+    RF_N_ESTIMATORS = 800
+    RF_MAX_DEPTH = 16
+    RF_MIN_SAMPLES_SPLIT = 2
+    RF_MIN_SAMPLES_LEAF = 10
+    RF_CLASS_WEIGHT = "balanced_subsample"
+    RF_N_JOBS = -1
     TRAINING_SAFE_CELLS = 8
     TRAINING_BOMB_PERCENTAGE_STD_DIVISOR = 8
     TRAINING_MIN_REVEALED_RATIO = 0.15
+    MIN_REVEALED_NEIGHBORS = 1 # Number of immediate neighbors to be revealed in trainingsdata
     BOARD_DIMENSION_PADDING = 5
     TRAININGSDATA_ALGO_REVEAL = False
     PERCENTAGE_ALGO_REVEAL = 0.5
+
 
     # PREDICTION POST-PROCESSING
     PREDICTION_SCALE_MAX = 100

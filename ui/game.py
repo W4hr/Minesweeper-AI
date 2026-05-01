@@ -6,8 +6,8 @@ from ui.renderer import Renderer
 from minesweeper.interactive import MinesweeperAPI
 from minesweeper.utils import round_prediction
 from minesweeper.stats import stats
-
 from minesweeper.utils import stringify_board
+from global_config import AIAlgorithms
 
 class Game:
     """Core logic for the Pygame-based Minesweeper graphical interface."""
@@ -75,6 +75,10 @@ class Game:
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if self.renderer.reset_rect.collidepoint(event.pos):
                         self.reset()
+                    elif self.renderer.train_logistic_rect.collidepoint(event.pos):
+                        self.board.train(AIAlgorithms.LOGISTIC_REGRESSION)
+                    elif self.renderer.train_random_forest.collidepoint(event.pos):
+                        self.board.train(AIAlgorithms.RANDOM_FOREST)
                     elif self.renderer.ai_solve_rect.collidepoint(event.pos):
                         if self.ai_solving:
                             self.disable_others()
