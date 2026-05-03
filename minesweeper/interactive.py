@@ -169,6 +169,7 @@ class MinesweeperAPI(MinesweeperBoard):
         self.init_ai()
 
         predictions = [[-1 for _ in range(self.size)] for _ in range(self.size)]
+        probabilities_raw = [[-1 for _ in range(self.size)] for _ in range(self.size)]
         hidden_cords = []
 
         for y, row in enumerate(self.hidden_board):
@@ -186,16 +187,17 @@ class MinesweeperAPI(MinesweeperBoard):
             else:
                 p = probability
             predictions[y][x] = round_prediction(p)
+            probabilities_raw[y][x] = p
 
-        return predictions
+        return predictions, probabilities_raw
 
     def ai_move(self, flagging: bool = False) -> tuple[int, int] | None:
-        predictions = self.predict_all()
+        predictions, probabilities = self.predict_all()
         smallest = config.PREDICTION_SCALE_MAX
         smallest_coordinates = None
         largest = 0
         largest_coordinates = None
-        for y, row in enumerate(predictions):
+        for y, row in enumerate(probabilities):
             for x, cell in enumerate(row):
                 if 0 <= cell <= config.PREDICTION_SCALE_MAX:
                     if cell < smallest:

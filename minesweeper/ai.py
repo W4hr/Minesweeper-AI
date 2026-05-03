@@ -23,6 +23,7 @@ def build_features(
     include_bomb_count: bool,
     include_hidden_count: bool,
     include_revealed_count: bool,
+    one_hot_encoding: bool,
 ) -> np.ndarray:
     x, y = coordinates
     neighborhood = board.get_out_of_bounds_neighborhood(board.hidden_board, x, y, radius)
@@ -35,7 +36,7 @@ def build_features(
         additional_data.append(board.get_revealed_count(neighborhood))
 
     flat_neighborhood = np.asarray(neighborhood).flatten()
-    if config.ONE_HOT_ENCODING:
+    if one_hot_encoding:
         features = encode_neighborhood(flat_neighborhood)
     else:
         features = flat_neighborhood.tolist()
@@ -53,35 +54,9 @@ class MinesweeperAI:
         include_hidden_count: bool = config.DEFAULT_INCLUDE_HIDDEN_COUNT,
         include_revealed_count: bool = config.DEFAULT_INCLUDE_REVEALED_COUNT,
     ):
-        board_dimension = radius_neighborhood * 2 + config.BOARD_DIMENSION_PADDING
-        X = [] # Input
-        Y = [] # Expected Ouput
-        print("Generating trainingsdata...")
-        start_data_gen = time.time()
-        while len(X) < trainingsdata_amount:
-            samples = get_trainingsdata(board_dimension, bomb_percentage, radius_neighborhood, include_bomb_count, include_hidden_count, include_revealed_count)
-            for x_sample, y_sample in samples:
-                if len(X) < trainingsdata_amount:
-                    X.append(x_sample)
-                    Y.append(y_sample)
-                else:
-                    break
-        end_data_gen = time.time()
-        print(f"Successfully generated trainingsdata in {end_data_gen - start_data_gen}")
-        self.data_generation_seconds: float = end_data_gen - start_data_gen
-        X_train, X_test, y_train, y_test = train_test_split(
-            X,
-            Y,
-            test_size=config.TRAIN_TEST_SPLIT_TEST_SIZE,
-            random_state=config.TRAIN_TEST_SPLIT_RANDOM_STATE,
-            shuffle=config.TRAIN_TEST_SPLIT_SHUFFLE,
-        )
-        self.X_train: list = X_train
-        self.X_test: list = X_test
-        self.y_train: list = y_train
-        self.y_test: list = y_test
         self.radius: int = radius_neighborhood
         self.model: LogisticRegression | None = None
+        self.trainingsdata_amount: int = trainingsdata_amount
 
         self.include_bomb_count: bool = include_bomb_count
         self.include_hidden_count: bool = include_hidden_count
@@ -89,11 +64,69 @@ class MinesweeperAI:
         self.bomb_percentage: float = bomb_percentage
 
         self.model_type_loaded = None
+        self.dataset_method = None
+        self.one_hot_encoding: bool = config.ONE_HOT_ENCODING
+
+        self._prepare_data_for_method(config.FALLBACK_METHOD)
+
+    def _resolve_one_hot_encoding(self, method: AIAlgorithms) -> bool:
+        if method == AIAlgorithms.LOGISTIC_REGRESSION:
+            return config.LOGREG_ONE_HOT_ENCODING
+        if method == AIAlgorithms.RANDOM_FOREST:
+            return config.RF_ONE_HOT_ENCODING
+        if method == AIAlgorithms.GRADIENT_BOOSTING:
+            return config.GB_ONE_HOT_ENCODING
+        return config.ONE_HOT_ENCODING
+
+    def _prepare_data_for_method(self, method: AIAlgorithms) -> None:
+        board_dimension = self.radius * 2 + config.BOARD_DIMENSION_PADDING
+        X = []
+        Y = []
+        self.one_hot_encoding = self._resolve_one_hot_encoding(method)
+
+        print("Generating trainingsdata...")
+        start_data_gen = time.time()
+        while len(X) < self.trainingsdata_amount:
+            samples = get_trainingsdata(
+                board_dimension,
+                self.bomb_percentage,
+                self.radius,
+                self.include_bomb_count,
+                self.include_hidden_count,
+                self.include_revealed_count,
+                self.one_hot_encoding,
+            )
+            for x_sample, y_sample in samples:
+                if len(X) < self.trainingsdata_amount:
+                    X.append(x_sample)
+                    Y.append(y_sample)
+                else:
+                    break
+        end_data_gen = time.time()
+        self.data_generation_seconds = end_data_gen - start_data_gen
+        print(f"Successfully generated trainingsdata in {self.data_generation_seconds}")
+
+        X_train, X_test, y_train, y_test = train_test_split(
+            X,
+            Y,
+            test_size=config.TRAIN_TEST_SPLIT_TEST_SIZE,
+            random_state=config.TRAIN_TEST_SPLIT_RANDOM_STATE,
+            shuffle=config.TRAIN_TEST_SPLIT_SHUFFLE,
+        )
+        self.X_train = X_train
+        self.X_test = X_test
+        self.y_train = y_train
+        self.y_test = y_test
+        self.dataset_method = method
         
     def train(self, method: AIAlgorithms = config.FALLBACK_METHOD) -> None:
-        if method in AIAlgorithms: self.method = method
-        if not method or method not in AIAlgorithms:
-            self.train(config.FALLBACK_METHOD)
+        if not isinstance(method, AIAlgorithms):
+            method = config.FALLBACK_METHOD
+
+        if self.dataset_method != method:
+            self._prepare_data_for_method(method)
+
+        self.method = method
         if method == AIAlgorithms.LOGISTIC_REGRESSION:
             self.train_logistic_regression()
         if method == AIAlgorithms.RANDOM_FOREST:
@@ -160,7 +193,9 @@ class MinesweeperAI:
             n_estimators=config.GB_N_ESTIMATORS,
             max_depth=config.GB_MAX_DEPTH,
             min_samples_split=config.GB_MIN_SAMPLES_SPLIT,
-            min_samples_leaf=config.GB_MIN_SAMPLES_LEAF
+            min_samples_leaf=config.GB_MIN_SAMPLES_LEAF,
+            learning_rate=config.GB_LEARNING_RATE,
+            subsample=config.GB_SUBSAMPLE
         )
         self.fit_model(model)
         self.model_type_loaded = AIAlgorithms.GRADIENT_BOOSTING
@@ -173,6 +208,7 @@ class MinesweeperAI:
             self.include_bomb_count,
             self.include_hidden_count,
             self.include_revealed_count,
+            self.one_hot_encoding,
         )
 
     
@@ -203,6 +239,7 @@ def get_trainingsdata(
     include_bomb_count: bool,
     include_hidden_count: bool,
     include_revealed_count: bool,
+    one_hot_encoding: bool,
 ) -> list[tuple[list[float], int]]:
     safe_cells = [
         [random.randint(0, board_dimension - 1), random.randint(0, board_dimension - 1)]
@@ -246,6 +283,7 @@ def get_trainingsdata(
                     include_bomb_count,
                     include_hidden_count,
                     include_revealed_count,
+                    one_hot_encoding,
                 ).tolist()
                 data = (features, board.binary_vector[y * board_dimension + x])
                 traindata.append(data)
