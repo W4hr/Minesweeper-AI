@@ -3,6 +3,7 @@ from ui.config import config
 from minesweeper.generator import MinesweeperBoard
 from typing import List, Tuple
 from minesweeper.utils import probability_to_color
+from global_config import AIAlgorithms
 
 class Renderer:
     """Handles rendering the Minesweeper board and UI elements using Pygame."""
@@ -65,10 +66,10 @@ class Renderer:
         self.board_x = origin_x
         self.board_y = origin_y
     
-    def draw_menu(self, surface: pygame.Surface, has_won: bool, has_died: bool, bomb_count: int, show_log_length: bool, games_completed: int) -> None:
+    def draw_menu(self, surface: pygame.Surface, has_won: bool, has_died: bool, bomb_count: int, show_log_length: bool, games_completed: int, loaded_model: AIAlgorithms) -> None:
         menu_width = self.board_x
         margin = config.MENU_MARGIN
-        button_height = config.WIDTH/20
+        button_height = config.WIDTH/25
         button_width = menu_width - 2 * margin
 
         status_text = "playing"
@@ -91,23 +92,25 @@ class Renderer:
         def button_column(desired_column: int) -> int | float:
             return margin * desired_column + half_button_width * (desired_column - 1)
 
-        self.train_logistic_rect = self.draw_button(button_column(1), button_row(2), half_button_width, button_height, "TRAIN LOGISTIC", surface)
-        self.train_random_forest = self.draw_button(button_column(2), button_row(2), half_button_width, button_height, "RAND FOREST", surface)
+        self.train_logistic_rect = self.draw_button(button_column(1), button_row(2), half_button_width, button_height, "TRAIN LOGISTIC", surface, config.GREEN if loaded_model == AIAlgorithms.LOGISTIC_REGRESSION else config.BACKGROUND)
+        self.train_random_forest = self.draw_button(button_column(2), button_row(2), half_button_width, button_height, "RAND FOREST", surface, config.GREEN if loaded_model == AIAlgorithms.RANDOM_FOREST else config.BACKGROUND)
 
-        self.ai_pred_rect = self.draw_button(button_column(1), button_row(3), half_button_width, button_height, "AI PREDICT", surface)
-        self.auto_pred_rect = self.draw_button(button_column(2), button_row(3), half_button_width, button_height, "AUTO-PREDICT", surface)
+        self.train_gradient_boosted = self.draw_button(button_column(1), button_row(3), half_button_width, button_height, "GRADIENT", surface, config.GREEN if loaded_model == AIAlgorithms.GRADIENT_BOOSTING else config.BACKGROUND)
 
-        self.ai_move_rect = self.draw_button(button_column(1), button_row(4), half_button_width, button_height, "AI MOVE", surface)
-        self.ai_solve_rect = self.draw_button(button_column(2), button_row(4), half_button_width, button_height, "AI SOLVE", surface)
+        self.ai_pred_rect = self.draw_button(button_column(1), button_row(4), half_button_width, button_height, "AI PREDICT", surface)
+        self.auto_pred_rect = self.draw_button(button_column(2), button_row(4), half_button_width, button_height, "AUTO-PREDICT", surface)
 
-        self.algo_move_rect = self.draw_button(button_column(1), button_row(5), half_button_width, button_height, "ALGO MOVE", surface)
-        self.algo_solve_rect = self.draw_button(button_column(2), button_row(5), half_button_width, button_height, "ALGO SOLVE", surface)
+        self.ai_move_rect = self.draw_button(button_column(1), button_row(5), half_button_width, button_height, "AI MOVE", surface)
+        self.ai_solve_rect = self.draw_button(button_column(2), button_row(5), half_button_width, button_height, "AI SOLVE", surface)
+
+        self.algo_move_rect = self.draw_button(button_column(1), button_row(6), half_button_width, button_height, "ALGO MOVE", surface)
+        self.algo_solve_rect = self.draw_button(button_column(2), button_row(6), half_button_width, button_height, "ALGO SOLVE", surface)
         
-        self.random_move_rect = self.draw_button(button_column(1), button_row(6), half_button_width, button_height, "RANDOM MOVE", surface)
-        self.random_solve_rect = self.draw_button(button_column(2), button_row(6), half_button_width, button_height, "RANDOM SOLVE", surface)
+        self.random_move_rect = self.draw_button(button_column(1), button_row(7), half_button_width, button_height, "RANDOM MOVE", surface)
+        self.random_solve_rect = self.draw_button(button_column(2), button_row(7), half_button_width, button_height, "RANDOM SOLVE", surface)
 
-        self.dual_solve_rect = self.draw_button(button_column(1), button_row(7), half_button_width, button_height, "HYBRID SOLVE", surface)
-        self.hybrid_random_solve_rect = self.draw_button(button_column(2), button_row(7), half_button_width, button_height, "HYBRID RANDOM", surface)
+        self.dual_solve_rect = self.draw_button(button_column(1), button_row(8), half_button_width, button_height, "HYBRID SOLVE", surface)
+        self.hybrid_random_solve_rect = self.draw_button(button_column(2), button_row(8), half_button_width, button_height, "HYBRID RANDOM", surface)
 
         self.quit_rect = self.draw_button(margin, config.HEIGHT - margin - button_height, button_width, button_height, "QUIT", surface)
 

@@ -55,6 +55,8 @@ class Config:
     GAME_STATUS_BACKGROUND = (0, 120, 0)
     BOMB_COUNT_BACKGROUND = (120, 0, 0)
 
+    GREEN = (70, 140, 74)
+
     def __init__(self):
         pygame.init()
         self.CELL_HEIGHT = min(self.HEIGHT, self.WIDTH) / self.BOARD_SIZE

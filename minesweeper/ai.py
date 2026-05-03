@@ -3,7 +3,7 @@ from minesweeper.interactive import MinesweeperAPI
 from minesweeper.config import config
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.metrics import mean_squared_error, root_mean_squared_error
 from global_config import AIAlgorithms
 import numpy as np
@@ -87,6 +87,8 @@ class MinesweeperAI:
         self.include_hidden_count: bool = include_hidden_count
         self.include_revealed_count: bool = include_revealed_count
         self.bomb_percentage: float = bomb_percentage
+
+        self.model_type_loaded = None
         
     def train(self, method: AIAlgorithms = config.FALLBACK_METHOD) -> None:
         if method in AIAlgorithms: self.method = method
@@ -96,13 +98,11 @@ class MinesweeperAI:
             self.train_logistic_regression()
         if method == AIAlgorithms.RANDOM_FOREST:
             self.train_random_forest()
+        if method == AIAlgorithms.GRADIENT_BOOSTING:
+            self.train_gradient_boosting()
 
-    def train_logistic_regression(self) -> None:
-        model = LogisticRegression(
-            random_state=config.RANDOM_STATE,
-            class_weight=config.LOGREG_CLASS_WEIGHT,
-            max_iter=config.LOGREG_MAX_ITER,
-        )
+    def fit_model(self, model: LogisticRegression | RandomForestClassifier | GradientBoostingClassifier):
+        model._parameter_constraints
         print("Training Model")
         start_train = time.time()
         model.fit(self.X_train, self.y_train)
@@ -113,8 +113,11 @@ class MinesweeperAI:
         y_pred_proba = model.predict_proba(self.X_test)[:, 1]
         self.mse = mean_squared_error(self.y_test, y_pred)
         self.rmse = root_mean_squared_error(self.y_test, y_pred)
-        self.weights = model.coef_
-        self.bias = model.intercept_
+        try:
+            self.weights = model.coef_
+            self.bias = model.intercept_
+        except:
+            pass
         self.model = model
         from minesweeper.stats import stats
         stats.log_training(
@@ -127,6 +130,16 @@ class MinesweeperAI:
             self.include_hidden_count,
             self.include_revealed_count
         )
+
+
+    def train_logistic_regression(self) -> None:
+        model = LogisticRegression(
+            random_state=config.RANDOM_STATE,
+            class_weight=config.LOGREG_CLASS_WEIGHT,
+            max_iter=config.LOGREG_MAX_ITER,
+        )
+        self.fit_model(model)
+        self.model_type_loaded = AIAlgorithms.LOGISTIC_REGRESSION
 
     def train_random_forest(self) -> None:
         model = RandomForestClassifier(
@@ -138,27 +151,19 @@ class MinesweeperAI:
             class_weight=config.RF_CLASS_WEIGHT,
             n_jobs=config.RF_N_JOBS,
         )
-        print("Training Model")
-        start_train = time.time()
-        model.fit(self.X_train, self.y_train)
-        end_train = time.time()
-        self.model_training_seconds = end_train - start_train
-        print(f"Model trained in {self.model_training_seconds}")
-        y_pred = model.predict(self.X_test)
-        self.mse = mean_squared_error(self.y_test, y_pred)
-        self.rmse = root_mean_squared_error(self.y_test, y_pred)
-        self.model = model
-        from minesweeper.stats import stats
-        stats.log_training(
-            self.data_generation_seconds,
-            self.model_training_seconds,
-            len(self.X_train) + len(self.X_test),
-            self.radius,
-            self.bomb_percentage,
-            self.include_bomb_count,
-            self.include_hidden_count,
-            self.include_revealed_count
+        self.fit_model(model)
+        self.model_type_loaded = AIAlgorithms.RANDOM_FOREST
+
+    def train_gradient_boosting(self) -> None:
+        model = GradientBoostingClassifier(
+            random_state=config.RANDOM_STATE,
+            n_estimators=config.GB_N_ESTIMATORS,
+            max_depth=config.GB_MAX_DEPTH,
+            min_samples_split=config.GB_MIN_SAMPLES_SPLIT,
+            min_samples_leaf=config.GB_MIN_SAMPLES_LEAF
         )
+        self.fit_model(model)
+        self.model_type_loaded = AIAlgorithms.GRADIENT_BOOSTING
 
     def _build_features(self, board: MinesweeperAPI, coordinates: tuple[int, int]):
         return build_features(

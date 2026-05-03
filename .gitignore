@@ -14,3 +14,4 @@ generate_numbers.py
 performance_results.csv
 generate_graphs.py
 .gitignore
+data.csv

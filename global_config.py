@@ -7,5 +7,6 @@ class GlobalConfig:
 class AIAlgorithms(Enum):
     RANDOM_FOREST = "RANDOM_FOREST"
     LOGISTIC_REGRESSION = "LOGISTIC_REGRESSION"
+    GRADIENT_BOOSTING = "GRADIENT_BOOSTING"
 
 global_config = GlobalConfig()

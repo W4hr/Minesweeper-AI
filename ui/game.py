@@ -79,6 +79,8 @@ class Game:
                         self.board.train(AIAlgorithms.LOGISTIC_REGRESSION)
                     elif self.renderer.train_random_forest.collidepoint(event.pos):
                         self.board.train(AIAlgorithms.RANDOM_FOREST)
+                    elif self.renderer.train_gradient_boosted.collidepoint(event.pos):
+                        self.board.train(AIAlgorithms.GRADIENT_BOOSTING)
                     elif self.renderer.ai_solve_rect.collidepoint(event.pos):
                         if self.ai_solving:
                             self.disable_others()
@@ -185,7 +187,7 @@ class Game:
             self.renderer.draw_board(self.screen, self.board.hidden_board)
             self.renderer.draw_predictions(self.screen, self.filtered_predictions())
             self.renderer.draw_revealed(self.screen, self.ai_revealed, self.algo_revealed)
-            self.renderer.draw_menu(self.screen, self.board.has_won(), self.board.has_died, self.board.bomb_count - self.board.get_flag_count(), self.ai_solving or self.hybrid_solving or self.random_solving or self.hybrid_random_solving, len(stats))
+            self.renderer.draw_menu(self.screen, self.board.has_won(), self.board.has_died, self.board.bomb_count - self.board.get_flag_count(), self.ai_solving or self.hybrid_solving or self.random_solving or self.hybrid_random_solving, len(stats), self.board.get_ai_type_loaded())
             self.renderer.draw_cursor(self.click_mode, self.screen, pygame.mouse.get_pos())
 
             pygame.display.flip()

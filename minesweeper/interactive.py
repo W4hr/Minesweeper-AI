@@ -167,7 +167,7 @@ class MinesweeperAPI(MinesweeperBoard):
 
     def predict_all(self) -> list[list[float]]:
         self.init_ai()
-        
+
         predictions = [[-1 for _ in range(self.size)] for _ in range(self.size)]
         hidden_cords = []
 
@@ -304,6 +304,11 @@ class MinesweeperAPI(MinesweeperBoard):
     def train(self, method: AIAlgorithms = ""):
         self.init_ai()
         self.ai.train(method)
+
+    def get_ai_type_loaded(self):
+        if self.ai:
+            return self.ai.model_type_loaded
+        return None
 
 
 if __name__ == "__main__":
