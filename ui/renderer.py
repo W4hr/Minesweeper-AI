@@ -92,10 +92,11 @@ class Renderer:
         def button_column(desired_column: int) -> int | float:
             return margin * desired_column + half_button_width * (desired_column - 1)
 
-        self.train_logistic_rect = self.draw_button(button_column(1), button_row(2), half_button_width, button_height, "TRAIN LOGISTIC", surface, config.GREEN if loaded_model == AIAlgorithms.LOGISTIC_REGRESSION else config.BACKGROUND)
+        self.train_logistic_rect = self.draw_button(button_column(1), button_row(2), half_button_width, button_height, "LOGISTIC", surface, config.GREEN if loaded_model == AIAlgorithms.LOGISTIC_REGRESSION else config.BACKGROUND)
         self.train_random_forest = self.draw_button(button_column(2), button_row(2), half_button_width, button_height, "RAND FOREST", surface, config.GREEN if loaded_model == AIAlgorithms.RANDOM_FOREST else config.BACKGROUND)
 
         self.train_gradient_boosted = self.draw_button(button_column(1), button_row(3), half_button_width, button_height, "GRADIENT", surface, config.GREEN if loaded_model == AIAlgorithms.GRADIENT_BOOSTING else config.BACKGROUND)
+        self.train_convolutional_neural_network = self.draw_button(button_column(2), button_row(3), half_button_width, button_height, "CNN", surface, config.GREEN if loaded_model == AIAlgorithms.CNN else config.BACKGROUND)
 
         self.ai_pred_rect = self.draw_button(button_column(1), button_row(4), half_button_width, button_height, "AI PREDICT", surface)
         self.auto_pred_rect = self.draw_button(button_column(2), button_row(4), half_button_width, button_height, "AUTO-PREDICT", surface)

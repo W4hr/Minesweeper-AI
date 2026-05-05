@@ -154,7 +154,7 @@ class MinesweeperAPI(MinesweeperBoard):
             neighborhood = self.get_out_of_bounds_neighborhood(
                 self.hidden_board, x, y, config.NIEGHBORHOOD_RELEVANT
             )
-            unknown_count = self.count_elements(neighborhood, self.HIDDEN) + self.count_elements(neighborhood, self.OUT_OF_BOUNDS)
+            unknown_count = self.count_element(neighborhood, self.HIDDEN) + self.count_element(neighborhood, self.OUT_OF_BOUNDS)
             max_neighborhood_size = (config.NIEGHBORHOOD_RELEVANT * 2 + 1) ** 2 # determine max possible neighborhood size for normalization
             norm_unknown_count = linNorm(unknown_count, max_neighborhood_size, 0, 1, 0) # Normalize
             uncertainty_weight = config.PREDICTION_UNCERTAINTY_WEIGHT
@@ -218,28 +218,33 @@ class MinesweeperAPI(MinesweeperBoard):
             self.reveal(smallest_coordinates[0], smallest_coordinates[1])
             return smallest_coordinates
 
-    def count_elements(self, matrix: list[list[int]], element: int | str) -> int:
+    def count_element(self, matrix: list[list[int]], element: int | str) -> int:
         count = 0
         for row in matrix:
             for cell in row:
                 if cell == element:
                     count += 1
         return count
-
-    def get_flag_count(self, matrix: list[list[int]] = None) -> int:
-        if matrix is None:
-            matrix = self.hidden_board
-        return self.count_elements(matrix, self.FLAG)
-
-    def get_revealed_count(self, matrix: list[list[int]] = None) -> int:
+    
+    def count_elements(self, matrix: list[list[int]], elements: list[int]):
         if matrix is None:
             matrix = self.hidden_board
         count = 0
         for row in matrix:
             for cell in row:
-                if 0 <= cell <= 8:
+                if cell in elements:
                     count += 1
         return count
+
+    def get_flag_count(self, matrix: list[list[int]] = None) -> int:
+        if matrix is None:
+            matrix = self.hidden_board
+        return self.count_element(matrix, self.FLAG)
+
+    def get_revealed_count(self, matrix: list[list[int]] = None) -> int:
+        if matrix is None:
+            matrix = self.hidden_board
+        return self.count_elements(matrix, range(0, 8))
     
     def is_revealed(self, value: int) -> bool:
         return 0 <= value <= 8
@@ -250,8 +255,8 @@ class MinesweeperAPI(MinesweeperBoard):
         if not self.is_revealed(cell):
             return
         neighborhood = self.get_neighborhood(self.hidden_board, x, y, 1)
-        hidden_count = self.count_elements(neighborhood, self.HIDDEN)
-        flag_count = self.count_elements(neighborhood, self.FLAG)
+        hidden_count = self.count_element(neighborhood, self.HIDDEN)
+        flag_count = self.count_element(neighborhood, self.FLAG)
         if hidden_count > 0 and hidden_count + flag_count == cell:
             for ny, nx in self.iter_neighborhood(x, y, 1):
                 if self.get_cell(nx, ny) == self.HIDDEN:

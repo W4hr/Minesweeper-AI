@@ -81,6 +81,8 @@ class Game:
                         self.board.train(AIAlgorithms.RANDOM_FOREST)
                     elif self.renderer.train_gradient_boosted.collidepoint(event.pos):
                         self.board.train(AIAlgorithms.GRADIENT_BOOSTING)
+                    elif self.renderer.train_convolutional_neural_network.collidepoint(event.pos):
+                        self.board.train(AIAlgorithms.CNN)
                     elif self.renderer.ai_solve_rect.collidepoint(event.pos):
                         if self.ai_solving:
                             self.disable_others()
@@ -96,7 +98,7 @@ class Game:
                         else:
                             self.click_mode = config.CLICK_NORMAL
                     elif self.renderer.auto_pred_rect.collidepoint(event.pos):
-                        self.predictions = self.board.predict_all()
+                        self.predictions, _ = self.board.predict_all()
                     elif self.renderer.ai_move_rect.collidepoint(event.pos):
                         picked_coordinates = self.board.ai_move()
                         if picked_coordinates:
