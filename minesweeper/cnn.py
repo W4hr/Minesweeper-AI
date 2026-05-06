@@ -32,35 +32,35 @@ class MinesweeperCNN(nn.Module):
 				"Adjust kernel sizes or radius."
 			)
 
-		self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=conv1_kernel_size)
-		self.bn1   = nn.BatchNorm2d(32)
+		self.conv1 = nn.Conv2d(in_channels=in_channels, out_channels=16, kernel_size=conv1_kernel_size)
 		self.relu1 = nn.ReLU()
-		self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=conv2_kernel_size)
-		self.bn2   = nn.BatchNorm2d(64)
+		self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=conv2_kernel_size)
 		self.relu2 = nn.ReLU()
-		self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=conv3_kernel_size)
-		self.bn3   = nn.BatchNorm2d(64)
+		self.conv3 = nn.Conv2d(in_channels=32, out_channels=8, kernel_size=conv3_kernel_size)
 		self.relu3 = nn.ReLU()
-		self.dropout = nn.Dropout(p=0.3)
-		self.fc = nn.Linear(in_features=64 * s3 * s3, out_features=1)
+		self.fc = nn.Linear(in_features=8 * s3 * s3, out_features=1)
 			
 	def forward(self, x):
-		x = self.relu1(self.bn1(self.conv1(x)))
-		x = self.relu2(self.bn2(self.conv2(x)))
-		x = self.relu3(self.bn3(self.conv3(x)))
+		x = self.conv1(x)
+		x = self.relu1(x)
+
+		x = self.conv2(x)
+		x = self.relu2(x)
+
+		x = self.conv3(x)
+		x = self.relu3(x)
+
 		x = flatten(x, 1)
-		x = self.dropout(x)
 		x = self.fc(x)
 		
 		return x
 
 class MinesweeperCNNClassifier:
-	def __init__(self, radius, in_channels, epochs, lr = 0.001, batch_size = 64, pos_weight: float | None = None):
+	def __init__(self, radius, in_channels, epochs, lr = 0.001, batch_size = 1):
 		self.radius = radius
 		self.in_channels = in_channels
 		self._net = MinesweeperCNN(radius, in_channels)
-		pos_weight_tensor = torch.tensor([pos_weight]) if pos_weight is not None else None
-		self._bce = nn.BCEWithLogitsLoss(pos_weight=pos_weight_tensor)
+		self._bce = nn.BCEWithLogitsLoss()
 		self._epochs = epochs
 		self._lr = lr
 		self._batch_size = batch_size
@@ -92,22 +92,17 @@ class MinesweeperCNNClassifier:
 		y_t = torch.tensor(y, dtype=torch.float32)
 
 		optimizer = optim.Adam(self._net.parameters(), lr=self._lr)
-		scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3)
 		dataset = torch.utils.data.TensorDataset(X_t, y_t)
 		loader = torch.utils.data.DataLoader(dataset, batch_size=self._batch_size, shuffle=True)
 
 		self._net.train()
-		for epoch in range(self._epochs):
-			epoch_loss = 0.0
+		for _ in range(self._epochs):
 			for xb, yb in loader:
 				optimizer.zero_grad()
 				logits = self._net(xb).squeeze(-1)
 				loss = self._bce(logits, yb)
 				loss.backward()
 				optimizer.step()
-				epoch_loss += loss.item() * len(xb)
-			epoch_loss /= len(dataset)
-			scheduler.step(epoch_loss)
 
 	def predict_proba(self, X):
 		self._net.eval()

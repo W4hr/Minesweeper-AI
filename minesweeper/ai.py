@@ -204,22 +204,10 @@ class MinesweeperAI:
         self.model_type_loaded = AIAlgorithms.GRADIENT_BOOSTING
 
     def train_cnn(self):
-        start_train = time.time()
-        model = MinesweeperCNNClassifier(
-            radius=self.radius,
-            in_channels=len(ENCODE_VALUES),
-            epochs=config.CNN_EPOCHS,
-            lr=config.CNN_LR,
-            batch_size=config.CNN_BATCH_SIZE,
-            pos_weight=config.CNN_POS_WEIGHT,
-        )
+        model = MinesweeperCNNClassifier(radius=self.radius, in_channels=len(ENCODE_VALUES), epochs=10)
         model.fit(self.X_train, self.y_train)
         self.model = model
         self.model_type_loaded = AIAlgorithms.CNN
-
-        end_train = time.time()
-        self.model_training_seconds = end_train - start_train
-        print(f"Model trained in {self.model_training_seconds}")
 
     def _build_features(self, board: MinesweeperAPI, coordinates: tuple[int, int]):
         return build_features(

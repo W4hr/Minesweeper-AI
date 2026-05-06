@@ -44,15 +44,8 @@ class Config:
     TRAINING_MIN_REVEALED_RATIO = 0.15
     MIN_REVEALED_NEIGHBORS = 1 # Number of immediate neighbors to be revealed in trainingsdata
     BOARD_DIMENSION_PADDING = 5
-    TRAININGSDATA_ALGO_REVEAL = True
-    PERCENTAGE_ALGO_REVEAL = 0.85
-
-    # CNN training hyper-parameters
-    CNN_EPOCHS = 40
-    CNN_BATCH_SIZE = 64
-    CNN_LR = 0.001
-    # Weight for the positive (bomb) class to counter the ~4:1 safe-vs-bomb imbalance
-    CNN_POS_WEIGHT = 4.0
+    TRAININGSDATA_ALGO_REVEAL = False
+    PERCENTAGE_ALGO_REVEAL = 0.5
 
 
     # PREDICTION POST-PROCESSING
