@@ -129,6 +129,10 @@ class Stats:
         self._append_session_row(row)
 
     def log(self, has_won, has_died, moves, bomb_count, dimensions, cells_revealed):
+        try:
+            number_cells_left = dimensions ** 2 - cells_revealed - bomb_count
+        except:
+            number_cells_left = None
         data = {
             "has_won": has_won, 
             "has_died": has_died,
@@ -136,7 +140,7 @@ class Stats:
             "bomb_count": bomb_count,
             "dimensions": dimensions,
             "cells_revealed": cells_revealed,
-            "number_cells_left": dimensions ** 2 - cells_revealed - bomb_count
+            "number_cells_left": number_cells_left
         }
         self.record.append(data)
 

@@ -1,6 +1,7 @@
 import random
 from minesweeper.interactive import MinesweeperAPI
 from minesweeper.config import config
+from minesweeper.cnn import MinesweeperCNNClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
@@ -12,7 +13,7 @@ import time
 ENCODE_VALUES = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8]
 VAL_TO_IDX = {v: i for i, v in enumerate(ENCODE_VALUES)}
 
-def encode_neighborhood(flat_neighborhood: np.ndarray) -> list[int]:
+def encode_flat_neighborhood(flat_neighborhood: np.ndarray) -> list[int]:
     idx = np.array([VAL_TO_IDX[int(v)] for v in flat_neighborhood], dtype=int)
     return np.eye(len(ENCODE_VALUES), dtype=int)[idx].flatten().tolist()
 
@@ -31,13 +32,13 @@ def build_features(
     if include_bomb_count:
         additional_data.append(board.bomb_count)
     if include_hidden_count:
-        additional_data.append(board.count_elements(neighborhood, board.HIDDEN))
+        additional_data.append(board.count_element(neighborhood, board.HIDDEN))
     if include_revealed_count:
         additional_data.append(board.get_revealed_count(neighborhood))
 
     flat_neighborhood = np.asarray(neighborhood).flatten()
     if one_hot_encoding:
-        features = encode_neighborhood(flat_neighborhood)
+        features = encode_flat_neighborhood(flat_neighborhood)
     else:
         features = flat_neighborhood.tolist()
 
@@ -67,8 +68,6 @@ class MinesweeperAI:
         self.dataset_method = None
         self.one_hot_encoding: bool = config.ONE_HOT_ENCODING
 
-        self._prepare_data_for_method(config.FALLBACK_METHOD)
-
     def _resolve_one_hot_encoding(self, method: AIAlgorithms) -> bool:
         if method == AIAlgorithms.LOGISTIC_REGRESSION:
             return config.LOGREG_ONE_HOT_ENCODING
@@ -83,6 +82,7 @@ class MinesweeperAI:
         X = []
         Y = []
         self.one_hot_encoding = self._resolve_one_hot_encoding(method)
+        matrix_neighborhood = method == AIAlgorithms.CNN
 
         print("Generating trainingsdata...")
         start_data_gen = time.time()
@@ -95,6 +95,7 @@ class MinesweeperAI:
                 self.include_hidden_count,
                 self.include_revealed_count,
                 self.one_hot_encoding,
+                matrix_neighborhood=matrix_neighborhood,
             )
             for x_sample, y_sample in samples:
                 if len(X) < self.trainingsdata_amount:
@@ -133,6 +134,8 @@ class MinesweeperAI:
             self.train_random_forest()
         if method == AIAlgorithms.GRADIENT_BOOSTING:
             self.train_gradient_boosting()
+        if method == AIAlgorithms.CNN:
+            self.train_cnn()
 
     def fit_model(self, model: LogisticRegression | RandomForestClassifier | GradientBoostingClassifier):
         model._parameter_constraints
@@ -200,6 +203,12 @@ class MinesweeperAI:
         self.fit_model(model)
         self.model_type_loaded = AIAlgorithms.GRADIENT_BOOSTING
 
+    def train_cnn(self):
+        model = MinesweeperCNNClassifier(radius=self.radius, in_channels=len(ENCODE_VALUES), epochs=10)
+        model.fit(self.X_train, self.y_train)
+        self.model = model
+        self.model_type_loaded = AIAlgorithms.CNN
+
     def _build_features(self, board: MinesweeperAPI, coordinates: tuple[int, int]):
         return build_features(
             board,
@@ -211,7 +220,6 @@ class MinesweeperAI:
             self.one_hot_encoding,
         )
 
-    
     def predict(self, board: MinesweeperAPI, coordinates: tuple[int, int]) -> np.ndarray:
         self.init_ai()
         features = self._build_features(board, coordinates)
@@ -240,20 +248,32 @@ def get_trainingsdata(
     include_hidden_count: bool,
     include_revealed_count: bool,
     one_hot_encoding: bool,
+    matrix_neighborhood: bool = False
 ) -> list[tuple[list[float], int]]:
+    
+    # Get generate x,y coordinates for safe cells to reveal cells to emulate partially revealed board
     safe_cells = [
         [random.randint(0, board_dimension - 1), random.randint(0, board_dimension - 1)]
         for _ in range(config.TRAINING_SAFE_CELLS)
     ]
+
+    # Get a normal distribution random number for the bomb count
     new_bomb_percentage = np.random.normal(
         bomb_percentage, bomb_percentage / config.TRAINING_BOMB_PERCENTAGE_STD_DIVISOR, 1
     )[0]
+
+    # Initialize board to use board generator and extract data
     board = MinesweeperAPI(board_dimension, new_bomb_percentage, safe_cells)
+
+    # Reaveal safe cells to emulate partially revealed board
     for safe_cell in safe_cells:
         board.reveal(safe_cell[0], safe_cell[1])
+
+    # Use algorithmic revealing sometimes to increase performance on more complex patterns, not easily solved by a simple algorithm
     if config.TRAININGSDATA_ALGO_REVEAL:
         if random.random() < config.PERCENTAGE_ALGO_REVEAL:
             board.auto_algo([])
+    
     traindata = []
     neighborhood_size = (radius * 2 + 1)**2
     
@@ -262,33 +282,52 @@ def get_trainingsdata(
             if board.hidden_board[y][x] != board.HIDDEN:
                 continue
 
-            immediate_neighborhood_revealed = 0
-            for ny, nx in board.iter_neighborhood(x, y, 1):
-                if board.hidden_board[ny][nx] >= 0:
-                    immediate_neighborhood_revealed += 1
+            neighborhood = board.get_out_of_bounds_neighborhood(board.hidden_board, x, y, 1)
+            immediate_neighborhood_revealed = board.count_elements(neighborhood, range(0, 8))
 
             if config.MIN_REVEALED_NEIGHBORS > immediate_neighborhood_revealed:
                 continue
             
-            revealed_cells = 0
-            for ny, nx in board.iter_neighborhood(x, y, radius):
-                if board.hidden_board[ny][nx] >= 0:
-                    revealed_cells += 1
+            neighborhood = board.get_out_of_bounds_neighborhood(board.hidden_board, x, y, radius)
+            revealed_cells = board.count_elements(neighborhood, range(0, 8))
             
             if revealed_cells / neighborhood_size > config.TRAINING_MIN_REVEALED_RATIO:
-                features = build_features(
-                    board,
-                    (x, y),
-                    radius,
-                    include_bomb_count,
-                    include_hidden_count,
-                    include_revealed_count,
-                    one_hot_encoding,
-                ).tolist()
+                if matrix_neighborhood:
+                    features = build_cnn_features(
+                        board,
+                        (x, y),
+                        radius,
+                        config.CNN_ONE_HOT_ENCODING,
+                    )
+                else:
+                    features = build_features(
+                        board,
+                        (x, y),
+                        radius,
+                        include_bomb_count,
+                        include_hidden_count,
+                        include_revealed_count,
+                        one_hot_encoding,
+                    ).tolist()
                 data = (features, board.binary_vector[y * board_dimension + x])
                 traindata.append(data)
     
     return traindata
+
+def build_cnn_features(
+    board: MinesweeperAPI,
+    coordinates: tuple[int, int],
+    radius: int,
+    one_hot_encoding: bool,
+) -> np.ndarray:
+    x, y = coordinates
+    neighborhood = board.get_out_of_bounds_neighborhood(board.hidden_board, x, y, radius)
+    arr = np.asarray(neighborhood)              # (H, W)
+    if one_hot_encoding:
+        idx = np.vectorize(VAL_TO_IDX.__getitem__)(arr)
+        return np.eye(len(ENCODE_VALUES), dtype=np.float32)[idx]  # (H, W, 13)
+    else:
+        return arr[:, :, np.newaxis].astype(np.float32)           # (H, W, 1)
 
 if __name__ == "__main__":
     #print(getTraingsdata(11, 15, 2))
